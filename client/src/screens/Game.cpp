@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <string>
+#include <unordered_set>
 
 #include "raylib.h"
 
@@ -50,6 +51,8 @@ void Game::Init() {
 }
 
 Direction direction;
+static std::unordered_set<int> spawnedEntities;
+
 void Game::Update() {
     float deltaTime = GetFrameTime();
 
@@ -83,7 +86,9 @@ void Game::Update() {
     AddEntityPayload addPayload{};
     while (networkManager.PoolPacket(networkManager.addQueue, networkManager.addMutex, addPayload)) {
         if (addPayload.entityID == localPlayerID) continue;
-
+        if (spawnedEntities.count(addPayload.entityID)) continue;
+        spawnedEntities.insert(addPayload.entityID);
+        std::cout << "Adicionando \n";
         Entity entity = entityManager.CreateEntity();
         entity.id = addPayload.entityID;
         entityManager.AddComponent(entity.id, Type((EntityType)addPayload.type));
