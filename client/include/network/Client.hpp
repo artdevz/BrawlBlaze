@@ -6,7 +6,7 @@
 #include <vector>
 #include <stdexcept>
 
-#include "../../../common/include/network/Packets.hpp"
+#include "../../../common/include/Packets.hpp"
 
 #ifdef _WIN32
     #include <winsock2.h>

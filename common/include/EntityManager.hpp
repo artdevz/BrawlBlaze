@@ -7,6 +7,7 @@
 #include <unordered_map>
 #include <vector>
 
+#include "components/Collider.hpp"
 #include "components/Position.hpp"
 #include "components/Tag.hpp"
 #include "components/Type.hpp"

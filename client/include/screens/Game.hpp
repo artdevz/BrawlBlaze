@@ -11,6 +11,7 @@
 #include "systems/Render.hpp"
 
 #include "../../../common/include/EntityManager.hpp"
+#include "../../../common/include/systems/Movement.hpp"
 
 class Game : public Screen {
     
@@ -32,6 +33,7 @@ private:
     EntityManager entityManager;
     NetworkManager networkManager;
 
+    Movement movement;
     Render render;
 
     std::unique_ptr<Client> client;
