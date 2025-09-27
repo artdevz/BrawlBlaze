@@ -47,6 +47,7 @@ int main(int argc, char** argv) {
                             entityManager.AddComponent(newPlayer.id, Type(EntityType::Player));
                             entityManager.AddComponent(newPlayer.id, Position(0.0f, 0.0f));
                             entityManager.AddComponent(newPlayer.id, Velocity());
+                            entityManager.AddComponent(newPlayer.id, Collider(16.0f, 16.0f));
                         }
 
                         {
@@ -78,7 +79,16 @@ int main(int argc, char** argv) {
     });
 
     std::thread simulateThread([&]() {
+        using clock = std::chrono::high_resolution_clock;
+        auto lastTime = clock::now();
+
         while (running) {
+            auto now = clock::now();
+            std::chrono::duration<float> elapsed = now - lastTime;
+            float deltaTime = elapsed.count();
+            if (deltaTime < 0.0f) deltaTime = 0.001f;
+            lastTime = now;
+
             {
                 std::lock_guard<std::mutex> lockInput(inputMutex);
                 std::lock_guard<std::mutex> lockEntity(entityMutex);
@@ -93,7 +103,7 @@ int main(int argc, char** argv) {
                     }
                 }
             }
-            movement.Move(entityManager, 1.0f / 60.0f);
+            movement.Move(entityManager, deltaTime);
 
             for (auto entity : entityManager.GetEntities<Position>()) {
                 auto position = entityManager.TryGetComponent<Position>(entity.id);
@@ -126,6 +136,9 @@ int main(int argc, char** argv) {
                 for (auto& entity : entityManager.GetEntities<Position>()) {
                     AddEntityPayload payload{};
                     payload.entityID = entity.id;
+                    if (auto* type = entityManager.TryGetComponent<Type>(entity.id)) {
+                        payload.type = (uint16_t)type->type;
+                    }                    
                     auto& position = entityManager.GetComponent<Position>(entity.id);
                     payload.x = position.x;
                     payload.y = position.y;
