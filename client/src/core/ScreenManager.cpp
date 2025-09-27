@@ -25,7 +25,7 @@ void ScreenManager::Run() {
     BeginDrawing();
     ClearBackground(BLACK);
     current->Update();
-    current->Render();
+    current->Draw();
     EndDrawing();
 
     if (current->ShouldClose()) {

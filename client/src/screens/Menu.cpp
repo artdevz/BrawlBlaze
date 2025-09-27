@@ -15,7 +15,7 @@ void Menu::Update() {
     if (IsKeyPressed(KEY_ENTER)) showHostScreen = true;
 }
 
-void Menu::Render() {
+void Menu::Draw() {
     ClearBackground(BLACK);
     DrawText("BrawlBlaze", 1280/2 - MeasureText("BrawlBlaze", 1280/15) / 2, 720/24, 1280/15, WHITE);
 }

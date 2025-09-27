@@ -8,6 +8,10 @@
 
 #include "network/Client.hpp"
 
+#include "systems/Render.hpp"
+
+#include "../../../common/include/EntityManager.hpp"
+
 class Game : public Screen {
     
 public:
@@ -15,7 +19,7 @@ public:
 
     void Init() override;
     void Update() override;
-    void Render() override;
+    void Draw() override;
 
     bool ShouldClose() const override;
     ScreenType NextScreen() override;
@@ -23,7 +27,12 @@ public:
 private:
     bool shouldClose;
 
+    uint32_t localPlayerID;
+
+    EntityManager entityManager;
     NetworkManager networkManager;
+
+    Render render;
 
     std::unique_ptr<Client> client;
 

@@ -5,11 +5,17 @@
 
 #include "raylib.h"
 
+#include "core/AssetManager.hpp"
+#include "core/CameraManager.hpp"
+
+#include "components/Sprite.hpp"
+
 Game::Game() {}
 
 void Game::Init() {
     shouldClose = false;
     TraceLog(LOG_INFO, "Starting the Game...");
+    AssetManager::Get().LoadTextures();
 
     client = std::make_unique<Client>();
     if (!client->Connect("127.0.0.1", 8080)) {
@@ -22,14 +28,33 @@ void Game::Init() {
     const char* nickname = "Artdz";
     std::strncpy(payload.nickname, nickname, sizeof(payload.nickname) - 1);
     payload.nickname[sizeof(payload.nickname) - 1] = '\0';
-    std::cout << "GGGGGGGGGGGGGGGG\n";
     client->Send(ClientPacketType::Connect, payload);
+
+    while (true) {
+        auto packet = client->Receive();
+        if (packet.type == (uint8_t)ServerPacketType::Init) {
+            auto initPayload = client->ParsePayload<InitPayload>(packet);
+            Entity entity = entityManager.CreateEntity();
+            entity.id = initPayload.entityID;
+            entityManager.AddComponent(entity.id, Type(EntityType::Player));
+            entityManager.AddComponent(entity.id, Position(initPayload.x, initPayload.y));
+            entityManager.AddComponent(entity.id, Sprite("human"));
+            localPlayerID = initPayload.entityID;
+        }
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+    }
 }
+
 void Game::Update() {
-    std::cout << "Game\n";
+
 }
-void Game::Render() {
-    DrawText("Game", 16, 16, 16, WHITE);
+
+void Game::Draw() {
+    BeginMode2D(CameraManager::Get().GetCamera2D());
+    ClearBackground(BLACK);
+    render.RenderTile(entityManager);
+    render.RenderActor(entityManager);
+    EndMode2D();
 }
 
 bool Game::ShouldClose() const { return shouldClose; }

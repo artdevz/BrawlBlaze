@@ -8,7 +8,7 @@ void Join::Init() {
     showGameScreen = true;
 }
 void Join::Update() {}
-void Join::Render() {
+void Join::Draw() {
     DrawText("Join", 16, 16, 16, WHITE);
 }
 

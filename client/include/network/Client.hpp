@@ -33,7 +33,6 @@ public:
 
     template<typename Payload>
     void Send(ClientPacketType type, const Payload& payload) {
-        std::cout << "Enviouadadsa!\n";
         if (!connected) return;
 
         ClientPacketHeader header{};
@@ -42,8 +41,6 @@ public:
         uint8_t buffer[sizeof(ClientPacketHeader) + sizeof(Payload)];
         std::memcpy(buffer, &header, sizeof(header));
         std::memcpy(buffer + sizeof(header), &payload, sizeof(Payload));
-
-        std::cout << "Enviou!\n";
 
         int sent = sendto(clientSocket, reinterpret_cast<const char*>(buffer), sizeof(buffer), 0, reinterpret_cast<sockaddr*>(&serverAddr), sizeof(serverAddr));
 

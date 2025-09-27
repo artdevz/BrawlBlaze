@@ -9,7 +9,7 @@ public:
     
     virtual void Init() {}
     virtual void Update() = 0;
-    virtual void Render() = 0;
+    virtual void Draw() = 0;
 
     virtual bool ShouldClose() const { return false; }
     virtual ScreenType NextScreen() { return ScreenType::None; }

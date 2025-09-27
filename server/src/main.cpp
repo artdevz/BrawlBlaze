@@ -36,6 +36,7 @@ int main(int argc, char** argv) {
                         Entity newPlayer;
                         {
                             newPlayer = entityManager.CreateEntity();
+                            entityManager.AddComponent(newPlayer.id, Type(EntityType::Player));
                             entityManager.AddComponent(newPlayer.id, Position(0.0f, 0.0f));
                         }
 

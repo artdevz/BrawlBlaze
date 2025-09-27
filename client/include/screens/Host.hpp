@@ -9,7 +9,7 @@ public:
 
     void Init() override;
     void Update() override;
-    void Render() override;
+    void Draw() override;
 
     bool ShouldClose() const override;
     ScreenType NextScreen() override;

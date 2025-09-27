@@ -8,7 +8,7 @@ void Host::Init() {
     showGameScreen = true;
 }
 void Host::Update() {}
-void Host::Render() {
+void Host::Draw() {
     DrawText("Host", 16, 16, 16, WHITE);
 }
 

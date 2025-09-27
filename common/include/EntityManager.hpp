@@ -8,6 +8,8 @@
 #include <vector>
 
 #include "components/Position.hpp"
+#include "components/Tag.hpp"
+#include "components/Type.hpp"
 
 struct Entity {
     uint32_t id;
