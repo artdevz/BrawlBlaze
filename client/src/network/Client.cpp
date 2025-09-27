@@ -83,7 +83,6 @@ Packet Client::Receive() {
     return {packetType, payload, static_cast<size_t>(bytesReceived), serverAddr};
 }
 
-
 void Client::Stop() {
     if (!connected) return;
     #ifdef _WIN32

@@ -52,7 +52,8 @@ void Server::Stop() {
     #else
         close(serverSocket);
     #endif
-        running = false;
+
+    running = false;
 }
 
 Packet Server::Receive() {

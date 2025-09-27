@@ -33,6 +33,7 @@ void Game::Init() {
     while (true) {
         auto packet = client->Receive();
         if (packet.type == (uint8_t)ServerPacketType::Init) {
+            std::cout << "Chegou!\n";
             auto initPayload = client->ParsePayload<InitPayload>(packet);
             Entity entity = entityManager.CreateEntity();
             entity.id = initPayload.entityID;
@@ -40,13 +41,14 @@ void Game::Init() {
             entityManager.AddComponent(entity.id, Position(initPayload.x, initPayload.y));
             entityManager.AddComponent(entity.id, Sprite("human"));
             localPlayerID = initPayload.entityID;
+            break;
         }
         std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
 }
 
 void Game::Update() {
-
+    if (auto* position = entityManager.TryGetComponent<Position>(localPlayerID)) CameraManager::Get().Update({position->x, position->y});
 }
 
 void Game::Draw() {

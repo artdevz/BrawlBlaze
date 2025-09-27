@@ -1,5 +1,7 @@
 #include "systems/Render.hpp"
 
+#include <iostream>
+
 #include "core/AssetManager.hpp"
 #include "components/Sprite.hpp"
 

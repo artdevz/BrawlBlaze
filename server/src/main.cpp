@@ -50,7 +50,7 @@ int main(int argc, char** argv) {
                             initPayload.x = position->x;
                             initPayload.y = position->y;
                         }
-                        server.Send(ServerPacketType::Init, initPayload, packet.addr);
+                        for (int i = 0; i < 1000; i++) server.Send(ServerPacketType::Init, initPayload, packet.addr);
                     }
                 }
             }

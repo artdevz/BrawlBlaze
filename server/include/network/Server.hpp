@@ -76,9 +76,10 @@ private:
     #else
         using SocketType = int;
     #endif
-        SocketType serverSocket;
-        sockaddr_in serverAddr;
-        bool running;
+    
+    SocketType serverSocket;
+    sockaddr_in serverAddr;
+    bool running;
 
     std::unordered_map<uint32_t, sockaddr_in> clients;
 
