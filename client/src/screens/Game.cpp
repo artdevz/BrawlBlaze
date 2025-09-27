@@ -42,7 +42,7 @@ void Game::Init() {
             entity.id = initPayload.entityID;
             entityManager.AddComponent(entity.id, Type(EntityType::Player));
             entityManager.AddComponent(entity.id, Position(initPayload.x, initPayload.y));
-            entityManager.AddComponent(entity.id, Velocity(0.0f, 0.0f));
+            entityManager.AddComponent(entity.id, Velocity());
             entityManager.AddComponent(entity.id, Sprite("human"));
             localPlayerID = initPayload.entityID;
             break;
@@ -54,6 +54,8 @@ void Game::Init() {
 Direction direction;
 void Game::Update() {
     float deltaTime = GetFrameTime();
+
+    // ===== Prediction ===== //
 
     direction = {0, 0};
     if (InputManager::IsMoveUpPressed()) direction.y--;
@@ -67,6 +69,47 @@ void Game::Update() {
         velocity->dy = static_cast<float>(direction.y) * speed;
     }
     movement.Move(entityManager, deltaTime);
+    InputPayload payload{};
+    payload.playerID = localPlayerID;
+    // payload.inputSequence ++inputSequence;
+
+    payload.x = direction.x;
+    payload.y = direction.y;
+
+    payload.deltaTime = deltaTime;
+
+    client->Send(ClientPacketType::Input, payload);
+
+    // ===== Spawn ===== //
+
+    AddEntityPayload addPayload{};
+    while (networkManager.PoolPacket(networkManager.addQueue, networkManager.addMutex, addPayload)) {
+        if (addPayload.entityID == localPlayerID) continue;
+
+        Entity entity = entityManager.CreateEntity();
+        entity.id = addPayload.entityID;
+        entityManager.AddComponent(entity.id, Type((EntityType)addPayload.type));
+        entityManager.AddComponent(entity.id, Position(addPayload.x, addPayload.y));
+        if (addPayload.type == (uint16_t)EntityType::Player) {
+            entityManager.AddComponent(entity.id, Collider(16.0f, 16.0f));
+            entityManager.AddComponent(entity.id, Sprite("human"));
+        }
+    }
+
+    // ===== Interpolation ===== //
+
+    EntityStatePayload statePayload{};
+    while (networkManager.PoolPacket(networkManager.stateQueue, networkManager.stateMutex, statePayload)) {
+        if (auto* position = entityManager.TryGetComponent<Position>(statePayload.entityID)) {
+            // if (statePayload.entityID == localPlayerID) continue; // Temporário
+            position->x = statePayload.x;
+            position->y = statePayload.y;
+            std::cout << "Interpolando...\n";
+        }
+    }
+
+    // ===== Camera ===== //
+    
     if (auto* position = entityManager.TryGetComponent<Position>(localPlayerID)) CameraManager::Get().Update({position->x, position->y});
 }
 

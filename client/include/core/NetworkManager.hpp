@@ -16,6 +16,9 @@ public:
     std::queue<AddEntityPayload> addQueue;
     std::mutex addMutex;
 
+    std::queue<EntityStatePayload> stateQueue;
+    std::mutex stateMutex;
+
     void Start(Client* client);
     void Stop();
 

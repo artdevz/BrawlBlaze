@@ -27,7 +27,13 @@ void NetworkManager::NetworkThread(Client* client) {
                 std::lock_guard<std::mutex> lock(addMutex);
                 addQueue.push(payload);
                 break;
-            }            
+            }
+            case ServerPacketType::EntityState: {
+                auto payload = client->ParsePayload<EntityStatePayload>(result);
+                std::lock_guard<std::mutex> lock(stateMutex);
+                stateQueue.push(payload);
+                break;
+            }  
             default:
                 break;
         }
