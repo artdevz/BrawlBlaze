@@ -9,6 +9,68 @@ enum class ClientPacketType : uint8_t {
 };
 
 enum class ServerPacketType : uint8_t {
-    Connect = 1,
-    EntityState = 2
+    Init = 1,
+    EntityState = 2,
+    Add = 3,
+    Remove = 4
 };
+
+#pragma pack(push, 1)
+
+// ================ //
+// CLIENT -> SERVER //
+// ================ //
+
+struct ClientPacketHeader {
+    ClientPacketType type;
+};
+
+struct ConnectPayload {
+    char nickname[32];
+};
+
+struct InputPayload {
+    uint32_t playerID;
+    uint32_t inputSequence;
+    int8_t x, y;
+    float targetX, targetY;
+    float deltaTime;
+};
+
+struct MessagePayload {
+    char message[128];
+};
+
+// ================ //
+// SERVER -> CLIENT //
+// ================ //
+
+struct ServerPacketHeader {
+    ServerPacketType type;
+};
+
+struct InitPayload {
+    uint32_t entityID;
+    char nickname[32];
+    float x, y;
+    float hp, maxHP;
+};
+
+struct EntityStatePayload {
+    uint32_t entityID;
+    float x, y;
+    uint32_t lastProcessedInput;
+};
+
+struct AddEntityPayload {
+    uint32_t entityID;
+    uint32_t type;
+    float x, y;
+    float hp, maxHP;
+};
+
+struct RemoveEntityPayload {
+    uint32_t entityID;
+};
+
+#pragma pack(pop)
