@@ -13,8 +13,6 @@
 
 struct Direction { int8_t x, y = 0; };
 
-Game::Game() {}
-
 void Game::Init() {
     shouldClose = false;
     TraceLog(LOG_INFO, "Starting the Game...");
@@ -104,7 +102,6 @@ void Game::Update() {
             // if (statePayload.entityID == localPlayerID) continue; // Temporário
             position->x = statePayload.x;
             position->y = statePayload.y;
-            std::cout << "Interpolando...\n";
         }
     }
 

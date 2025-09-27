@@ -5,9 +5,13 @@
 Host::Host() {}
 
 void Host::Init() {
-    showGameScreen = true;
+    showGameScreen = false;
 }
-void Host::Update() {}
+void Host::Update() {
+    if (IsKeyPressed(KEY_ESCAPE) || IsKeyPressed(KEY_BACKSPACE)) shouldClose = true;
+    if (IsKeyPressed(KEY_ENTER)) showGameScreen = true;
+}
+
 void Host::Draw() {
     DrawText("Host", 16, 16, 16, WHITE);
 }

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "screens/Screen.hpp"
+#include "utils/Button.hpp"
 
 class Menu : public Screen {
 
@@ -16,7 +17,10 @@ public:
 
 private:
     bool shouldClose;
-    bool showHostScreen;
-    bool showJoinScreen;
+    bool showStartScreen;
+    bool showEnterScreen;
+
+    u_int8_t selectedButton = 0;
+    std::vector<Button> buttons;
 
 };

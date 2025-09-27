@@ -97,7 +97,7 @@ int main(int argc, char** argv) {
 
             for (auto entity : entityManager.GetEntities<Position>()) {
                 auto position = entityManager.TryGetComponent<Position>(entity.id);
-                cout << "Entity[" << entity.id << "]: x: " << position->x << " y: " << position->y << "\n";
+                // cout << "Entity[" << entity.id << "]: x: " << position->x << " y: " << position->y << "\n";
             }
 
             std::this_thread::sleep_for(std::chrono::milliseconds(5));
@@ -139,6 +139,8 @@ int main(int argc, char** argv) {
     running = false;
 
     inputThread.join();
+    simulateThread.join();
+    broadcastThread.join();
 
     server.Stop();
     cout << "[Server] Shutdown.\n";

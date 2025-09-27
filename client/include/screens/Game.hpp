@@ -16,8 +16,6 @@
 class Game : public Screen {
     
 public:
-    Game();
-
     void Init() override;
     void Update() override;
     void Draw() override;
