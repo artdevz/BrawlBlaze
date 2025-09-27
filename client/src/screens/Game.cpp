@@ -26,7 +26,7 @@ void Game::Init() {
     networkManager.Start(client.get());
 
     ConnectPayload payload{};
-    const char* nickname = "Artdz";
+    const char* nickname = "Artdz2";
     std::strncpy(payload.nickname, nickname, sizeof(payload.nickname) - 1);
     payload.nickname[sizeof(payload.nickname) - 1] = '\0';
     client->Send(ClientPacketType::Connect, payload);

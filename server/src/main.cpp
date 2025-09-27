@@ -97,7 +97,7 @@ int main(int argc, char** argv) {
 
             for (auto entity : entityManager.GetEntities<Position>()) {
                 auto position = entityManager.TryGetComponent<Position>(entity.id);
-                // cout << "Entity[" << entity.id << "]: x: " << position->x << " y: " << position->y << "\n";
+                cout << "Entity[" << entity.id << "]: x: " << position->x << " y: " << position->y << "\n";
             }
 
             std::this_thread::sleep_for(std::chrono::milliseconds(5));
@@ -107,6 +107,7 @@ int main(int argc, char** argv) {
     std::thread broadcastThread([&]() {
         while (running) {
             std::vector<EntityStatePayload> stateSnapshot;
+            std::vector<AddEntityPayload> addSnapshot;
 
             // ===== Generate ===== //
 
@@ -114,12 +115,21 @@ int main(int argc, char** argv) {
                 std::lock_guard<std::mutex> lock(entityMutex);
 
                 for (auto& entity : entityManager.GetEntities<Position, Velocity>()) {
-                    auto& position = entityManager.GetComponent<Position>(entity.id);
                     EntityStatePayload payload{};
                     payload.entityID = entity.id;
+                    auto& position = entityManager.GetComponent<Position>(entity.id);
                     payload.x = position.x;
                     payload.y = position.y;
                     stateSnapshot.push_back(payload);
+                }
+
+                for (auto& entity : entityManager.GetEntities<Position>()) {
+                    AddEntityPayload payload{};
+                    payload.entityID = entity.id;
+                    auto& position = entityManager.GetComponent<Position>(entity.id);
+                    payload.x = position.x;
+                    payload.y = position.y;
+                    addSnapshot.push_back(payload);
                 }
             }
 
@@ -128,6 +138,11 @@ int main(int argc, char** argv) {
             if (!stateSnapshot.empty()) {
                 std::lock_guard<std::mutex> lock(serverMutex);
                 server.Broadcast<EntityStatePayload>(ServerPacketType::EntityState, stateSnapshot);
+            }
+
+            if (!addSnapshot.empty()) {
+                std::lock_guard<std::mutex> lock(serverMutex);
+                server.Broadcast<AddEntityPayload>(ServerPacketType::Add, addSnapshot);
             }
 
             std::this_thread::sleep_for(std::chrono::milliseconds(50));
