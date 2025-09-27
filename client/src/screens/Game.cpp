@@ -88,7 +88,6 @@ void Game::Update() {
         if (addPayload.entityID == localPlayerID) continue;
         if (spawnedEntities.count(addPayload.entityID)) continue;
         spawnedEntities.insert(addPayload.entityID);
-        std::cout << "Adicionando \n";
         Entity entity = entityManager.CreateEntity();
         entity.id = addPayload.entityID;
         entityManager.AddComponent(entity.id, Type((EntityType)addPayload.type));
