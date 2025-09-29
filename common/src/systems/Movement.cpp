@@ -11,10 +11,12 @@ void Movement::Move(EntityManager& entityManager, float deltaTime) {
 
         if (velocity.dx && velocity.dy) {
             float magnitude = std::sqrt(velocity.dx * velocity.dx + velocity.dy * velocity.dy);
-            float speed = 100.0f;
+            float speed = velocity.maxSpeed;
             velocity.dx = (velocity.dx / magnitude) * speed;
             velocity.dy = (velocity.dy / magnitude) * speed;
         }
+
+        std::cout << "EntityID: [" << entity.id << "]: Velocity: dx: " << velocity.dx << " dy: " << velocity.dy << " MoveSpeed: " << velocity.maxSpeed << "\n";
 
         auto newX = position.x + velocity.dx * deltaTime;
         auto newY = position.y + velocity.dy * deltaTime;

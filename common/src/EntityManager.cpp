@@ -3,7 +3,7 @@
 #include <algorithm>
 
 Entity EntityManager::CreateEntity() {
-    uint32_t id = entities.size();
+    uint32_t id = generation++;
     entities[id] = Entity(id);
     return entities[id];
 }

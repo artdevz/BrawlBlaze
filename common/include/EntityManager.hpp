@@ -14,6 +14,7 @@
 #include "components/Team.hpp"
 #include "components/Type.hpp"
 #include "components/Velocity.hpp"
+#include "components/RemoveTag.hpp"
 
 struct Entity {
     uint32_t id;
@@ -70,5 +71,7 @@ public:
 private:
     std::unordered_map<uint32_t, Entity> entities;
     std::unordered_map<uint32_t, std::unordered_map<std::type_index, std::shared_ptr<void>>> entityComponents;
+
+    uint32_t generation = 0;
 
 };

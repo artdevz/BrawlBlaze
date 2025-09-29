@@ -41,7 +41,7 @@ void Game::Init() {
             entity.id = initPayload.entityID;
             entityManager.AddComponent(entity.id, Type(EntityType::Player));
             entityManager.AddComponent(entity.id, Position(initPayload.x, initPayload.y));
-            entityManager.AddComponent(entity.id, Velocity());
+            entityManager.AddComponent(entity.id, Velocity(100.0f));
             entityManager.AddComponent(entity.id, Health(100.0f, 100.0f));
             entityManager.AddComponent(entity.id, Collider(16.0f, 16.0f));
             entityManager.AddComponent(entity.id, Team(TeamColor::Blue));
@@ -123,6 +123,17 @@ void Game::Update() {
             // if (statePayload.entityID == localPlayerID) continue; // Temporário
             position->x = statePayload.x;
             position->y = statePayload.y;
+        }
+    }
+
+    // ===== Despawn ===== //
+
+    RemoveEntityPayload removePayload{};
+    while (networkManager.PoolPacket(networkManager.removeQueue, networkManager.removeMutex, removePayload)) {
+        if (auto* position = entityManager.TryGetComponent<Position>(removePayload.entityID)) {
+            std::cout << "Removing Entity ID: " << removePayload.entityID << "\n";
+            entityManager.DeleteEntity(removePayload.entityID);
+            spawnedEntities.erase(removePayload.entityID);
         }
     }
 

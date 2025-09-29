@@ -10,6 +10,8 @@
 
 #include "../../common/include/systems/Movement.hpp"
 
+#include "components/Lifetime.hpp"
+
 using std::string, std::cout;
 
 int main(int argc, char** argv) {
@@ -46,7 +48,7 @@ int main(int argc, char** argv) {
                             newPlayer = entityManager.CreateEntity();
                             entityManager.AddComponent(newPlayer.id, Type(EntityType::Player));
                             entityManager.AddComponent(newPlayer.id, Position(0.0f, 0.0f));
-                            entityManager.AddComponent(newPlayer.id, Velocity());
+                            entityManager.AddComponent(newPlayer.id, Velocity(100.0f, 100.0f));
                             entityManager.AddComponent(newPlayer.id, Collider(16.0f, 16.0f));
                             entityManager.AddComponent(newPlayer.id, Health(100.0f, 100.0f));
                             entityManager.AddComponent(newPlayer.id, Team(TeamColor::Blue));
@@ -97,7 +99,7 @@ int main(int argc, char** argv) {
                 Entity ally = entityManager.CreateEntity();
                 entityManager.AddComponent(ally.id, Type(EntityType::Player));
                 entityManager.AddComponent(ally.id, Position(-160.0f, 0.0f));
-                entityManager.AddComponent(ally.id, Velocity());
+                entityManager.AddComponent(ally.id, Velocity(100.0f));
                 entityManager.AddComponent(ally.id, Collider(16.0f, 16.0f));
                 entityManager.AddComponent(ally.id, Health(100.0f, 100.0f));
                 entityManager.AddComponent(ally.id, Team(TeamColor::Blue));
@@ -105,7 +107,7 @@ int main(int argc, char** argv) {
                 Entity dummy = entityManager.CreateEntity();
                 entityManager.AddComponent(dummy.id, Type(EntityType::Player));
                 entityManager.AddComponent(dummy.id, Position(160.0f, 0.0f));
-                entityManager.AddComponent(dummy.id, Velocity());
+                entityManager.AddComponent(dummy.id, Velocity(100.0f));
                 entityManager.AddComponent(dummy.id, Collider(16.0f, 16.0f));
                 entityManager.AddComponent(dummy.id, Health(100.0f, 100.0f));
                 entityManager.AddComponent(dummy.id, Team(TeamColor::Red));
@@ -135,18 +137,30 @@ int main(int argc, char** argv) {
                         entityManager.AddComponent(projectile.id, Type(EntityType::Projectile));
                         if (auto* origin = entityManager.TryGetComponent<Position>(input.playerID)) {
                             entityManager.AddComponent(projectile.id, Position(origin->x, origin->y));
-                            entityManager.AddComponent(projectile.id, Velocity((input.targetX - origin->x), (input.targetY - origin->y)));
+                            entityManager.AddComponent(projectile.id, Velocity(600.0f, (input.targetX - origin->x), (input.targetY - origin->y)));
+                            // entityManager.AddComponent(projectile.id, Collider(4.0f, 4.0f));
+                            entityManager.AddComponent(projectile.id, Lifetime(100.0f));
                         }
                     }
                 }
             }
             movement.Move(entityManager, deltaTime);
 
+            for (auto entity : entityManager.GetEntities<Lifetime>()) {
+                auto& lifetime = entityManager.GetComponent<Lifetime>(entity.id);
+                lifetime.lifespan -= 1.0f;
+                //cout << "Entity[" << entity.id << "] Lifetime: " << lifetime.lifespan << "\n";
+                if (lifetime.lifespan <= 0.0f) {
+                    cout << "[Server] Entity ID: " << entity.id << " expired.\n";
+                    entityManager.AddComponent(entity.id, RemoveTag());
+                }
+            }
+
             for (auto entity : entityManager.GetEntities<Position>()) {
                 auto position = entityManager.TryGetComponent<Position>(entity.id);
                 cout << "Entity[" << entity.id << "]: x: " << position->x << " y: " << position->y << "\n";
             }
-            cout << "EntityManagerSize: " << (int)entityManager.GetEntities().size() << "\n";
+            // cout << "EntityManagerSize: " << (int)entityManager.GetEntities().size() << "\n";
 
             std::this_thread::sleep_for(std::chrono::milliseconds(5));
         }
@@ -156,6 +170,7 @@ int main(int argc, char** argv) {
         while (running) {
             std::vector<EntityStatePayload> stateSnapshot;
             std::vector<AddEntityPayload> addSnapshot;
+            std::vector<RemoveEntityPayload> removeSnapshot;
 
             // ===== Generate ===== //
 
@@ -189,6 +204,14 @@ int main(int argc, char** argv) {
                     }
                     addSnapshot.push_back(payload);
                 }
+
+                for (auto& entity : entityManager.GetEntities<RemoveTag>()) {
+                    RemoveEntityPayload payload{};
+                    payload.entityID = entity.id;
+                    removeSnapshot.push_back(payload);
+                    entityManager.DeleteEntity(entity.id);
+                    cout << "[Server] Entity ID: " << entity.id << " removed.\n";
+                }
             }
 
             // ===== Send ===== //
@@ -201,6 +224,11 @@ int main(int argc, char** argv) {
             if (!addSnapshot.empty()) {
                 std::lock_guard<std::mutex> lock(serverMutex);
                 server.Broadcast<AddEntityPayload>(ServerPacketType::Add, addSnapshot);
+            }
+
+            if (!removeSnapshot.empty()) {
+                std::lock_guard<std::mutex> lock(serverMutex);
+                server.Broadcast<RemoveEntityPayload>(ServerPacketType::Remove, removeSnapshot);
             }
 
             std::this_thread::sleep_for(std::chrono::milliseconds(50));

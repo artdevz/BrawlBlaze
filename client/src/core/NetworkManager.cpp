@@ -33,6 +33,12 @@ void NetworkManager::NetworkThread(Client* client) {
                 std::lock_guard<std::mutex> lock(stateMutex);
                 stateQueue.push(payload);
                 break;
+            }
+            case ServerPacketType::Remove: {
+                auto payload = client->ParsePayload<RemoveEntityPayload>(result);
+                std::lock_guard<std::mutex> lock(removeMutex);
+                removeQueue.push(payload);
+                break;
             }  
             default:
                 break;

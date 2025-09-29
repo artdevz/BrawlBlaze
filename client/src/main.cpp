@@ -8,6 +8,7 @@ int main() {
     SetTraceLogLevel(LOG_TRACE);
 
     InitWindow(1280, 720, "BrawlBlaze");
+    SetTargetFPS(60);
 
     ScreenManager screenManager;
     screenManager.Push(ScreenType::Menu);
