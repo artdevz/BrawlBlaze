@@ -33,6 +33,7 @@ struct InputPayload {
     uint32_t playerID;
     uint32_t inputSequence;
     int8_t x, y;
+    bool isMouseUsed = false;
     float targetX, targetY;
     float deltaTime;
 };
@@ -64,7 +65,7 @@ struct EntityStatePayload {
 
 struct AddEntityPayload {
     uint32_t entityID;
-    uint32_t type;
+    uint16_t type;
     float x, y;
     float hp, maxHP;
     uint8_t team;

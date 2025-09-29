@@ -48,6 +48,8 @@ int main(int argc, char** argv) {
                             entityManager.AddComponent(newPlayer.id, Position(0.0f, 0.0f));
                             entityManager.AddComponent(newPlayer.id, Velocity());
                             entityManager.AddComponent(newPlayer.id, Collider(16.0f, 16.0f));
+                            entityManager.AddComponent(newPlayer.id, Health(100.0f, 100.0f));
+                            entityManager.AddComponent(newPlayer.id, Team(TeamColor::Blue));
                         }
 
                         {
@@ -97,6 +99,7 @@ int main(int argc, char** argv) {
                 entityManager.AddComponent(ally.id, Position(-160.0f, 0.0f));
                 entityManager.AddComponent(ally.id, Velocity());
                 entityManager.AddComponent(ally.id, Collider(16.0f, 16.0f));
+                entityManager.AddComponent(ally.id, Health(100.0f, 100.0f));
                 entityManager.AddComponent(ally.id, Team(TeamColor::Blue));
                 
                 Entity dummy = entityManager.CreateEntity();
@@ -104,6 +107,7 @@ int main(int argc, char** argv) {
                 entityManager.AddComponent(dummy.id, Position(160.0f, 0.0f));
                 entityManager.AddComponent(dummy.id, Velocity());
                 entityManager.AddComponent(dummy.id, Collider(16.0f, 16.0f));
+                entityManager.AddComponent(dummy.id, Health(100.0f, 100.0f));
                 entityManager.AddComponent(dummy.id, Team(TeamColor::Red));
                 initialized = true;
             }
@@ -121,6 +125,18 @@ int main(int argc, char** argv) {
                         float speed = 100.0f;
                         if (input.x > 0) {input.x = 1.0f;} if (input.x < 0) {input.x = -1.0f;} if (input.y > 0) {input.y = 1.0f;} if (input.y < 0) {input.y = -1.0f;}
                         velocity->dx = input.x * speed; velocity->dy = input.y * speed;
+                    }
+
+                    if (input.isMouseUsed) {
+                        cout << "Mouse usado!\n";
+                        cout << "TargetX: " << input.targetX << " TargetY: " << input.targetY << "\n";
+                        if (entityManager.GetEntities().size() > 3) continue; // Temporário
+                        Entity projectile = entityManager.CreateEntity();
+                        entityManager.AddComponent(projectile.id, Type(EntityType::Projectile));
+                        if (auto* origin = entityManager.TryGetComponent<Position>(input.playerID)) {
+                            entityManager.AddComponent(projectile.id, Position(origin->x, origin->y));
+                            entityManager.AddComponent(projectile.id, Velocity((input.targetX - origin->x), (input.targetY - origin->y)));
+                        }
                     }
                 }
             }
@@ -164,6 +180,10 @@ int main(int argc, char** argv) {
                     auto& position = entityManager.GetComponent<Position>(entity.id);
                     payload.x = position.x;
                     payload.y = position.y;
+                    if (auto* health = entityManager.TryGetComponent<Health>(entity.id)) {
+                        payload.hp = health->current;
+                        payload.maxHP = health->max;
+                    }
                     if (auto* team = entityManager.TryGetComponent<Team>(entity.id)) {
                         payload.team = (uint8_t)team->color;
                     }

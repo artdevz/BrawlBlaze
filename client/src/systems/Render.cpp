@@ -29,10 +29,11 @@ void Render::RenderLifebar(EntityManager& entityManager, uint32_t localID) {
         auto& position = entityManager.GetComponent<Position>(entity.id);
         auto& health = entityManager.GetComponent<Health>(entity.id);
 
-        Color lifeBarColor = GRAY;
-        if (auto* team = entityManager.TryGetComponent<Team>(entity.id)) {
-            if (team->color == TeamColor::Blue) lifeBarColor = BLUE;
-            else lifeBarColor = RED;
+        Color lifeBarColor = RED;
+        if (auto* localTeam = entityManager.TryGetComponent<Team>(localID)) {
+            if (auto* team = entityManager.TryGetComponent<Team>(entity.id)) {
+                if (team->color == localTeam->color) lifeBarColor = BLUE;
+            }
         }
         if (localID == entity.id) lifeBarColor = GREEN;
         DrawRectangle(position.x - 10, position.y - 14, 20 * (health.current / health.max), 2, lifeBarColor);

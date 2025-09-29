@@ -76,10 +76,14 @@ void Game::Update() {
     InputPayload payload{};
     payload.playerID = localPlayerID;
     // payload.inputSequence ++inputSequence;
-
     payload.x = direction.x;
     payload.y = direction.y;
-
+    if (InputManager::IsBasicAttackPressed()) {
+        Vector2 worldPosition = GetScreenToWorld2D(GetMousePosition(), CameraManager::Get().GetCamera2D());
+        payload.targetX = worldPosition.x;
+        payload.targetY = worldPosition.y;
+        payload.isMouseUsed = true;
+    }
     payload.deltaTime = deltaTime;
 
     client->Send(ClientPacketType::Input, payload);
@@ -94,12 +98,18 @@ void Game::Update() {
         Entity entity = entityManager.CreateEntity();
         entity.id = addPayload.entityID;
         entityManager.AddComponent(entity.id, Type((EntityType)addPayload.type));
+        std::cout << "Spawning Entity ID: " << entity.id << " Type: " << (int)addPayload.type << "\n";
         entityManager.AddComponent(entity.id, Position(addPayload.x, addPayload.y));
         if (addPayload.type == (uint16_t)EntityType::Player) {
             entityManager.AddComponent(entity.id, Collider(16.0f, 16.0f));
             entityManager.AddComponent(entity.id, Sprite("human"));
         }
-        entityManager.AddComponent(entity.id, Health(100.0f, 100.0f));
+        if (addPayload.type == (uint16_t)EntityType::Projectile) {
+            // entityManager.AddComponent(entity.id, Velocity());
+            entityManager.AddComponent(entity.id, Collider(4.0f, 4.0f));
+            entityManager.AddComponent(entity.id, Sprite("bullet"));
+        }
+        entityManager.AddComponent(entity.id, Health(addPayload.hp, addPayload.maxHP));
         if (addPayload.team > 0) {
             entityManager.AddComponent(entity.id, Team((TeamColor)addPayload.team));
         }
@@ -127,7 +137,7 @@ void Game::Draw() {
     render.RenderTile(entityManager);
     render.RenderActor(entityManager);
     render.RenderLifebar(entityManager, localPlayerID);
-    DrawRectangle(160, 160, 16, 16, GRAY);
+    DrawRectangle(160-8, 160-8, 16, 16, GRAY);
     EndMode2D();
 
     DrawLine(1280/2, 0, 1280/2, 720, RED);
@@ -135,8 +145,8 @@ void Game::Draw() {
 
     std::string entitiesCount = "E: " + std::to_string((int)entityManager.GetEntities().size());
     std::string position = "X: " + std::to_string((float)CameraManager::Get().GetCamera2D().target.x) + " Y: " + std::to_string((float)CameraManager::Get().GetCamera2D().target.y) + " Zoom: " + std::to_string((float)CameraManager::Get().GetCamera2D().zoom);
-    DrawText(entitiesCount.c_str(), 10, 700, 20, WHITE);
-    DrawText(position.c_str(), 10, 680, 20, WHITE);
+    DrawText(entitiesCount.c_str(), 10, 30, 20, WHITE);
+    DrawText(position.c_str(), 10, 50, 20, WHITE);
 
     DrawFPS(10, 10);
 }

@@ -21,6 +21,7 @@ void Movement::Move(EntityManager& entityManager, float deltaTime) {
 
         bool collided = false;
         for (auto& other : entityManager.GetEntities<Collider>()) {
+            if (!entityManager.TryGetComponent<Collider>(entity.id)) break;
             if (other.id == entity.id) continue;
             auto* otherPosition = entityManager.TryGetComponent<Position>(other.id);
             auto* otherCollider = entityManager.TryGetComponent<Collider>(other.id);

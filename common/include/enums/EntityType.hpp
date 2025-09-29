@@ -5,5 +5,6 @@
 enum class EntityType : uint16_t {
     None = 0,
     Player,
-    FloorTile
+    FloorTile,
+    Projectile
 };

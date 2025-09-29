@@ -27,6 +27,7 @@ Sound AssetManager::GetSound(const std::string& id) const {
 
 void AssetManager::LoadTextures() {
     LoadTexture("human", "assets/sprites/Human.png");
+    LoadTexture("bullet", "assets/sprites/Bullet.png");
 }
 
 void AssetManager::UnloadTextures() {
