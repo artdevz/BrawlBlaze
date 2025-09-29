@@ -20,6 +20,21 @@ void Render::RenderActor(EntityManager& entityManager) {
         auto& position = entityManager.GetComponent<Position>(entity.id);
         auto& sprite = entityManager.GetComponent<Sprite>(entity.id);
 
-        DrawTexture(AssetManager::Get().GetTexture(sprite.id), position.x, position.y, WHITE);
+        DrawTexture(AssetManager::Get().GetTexture(sprite.id), position.x-8, position.y-8, WHITE);
+    }
+}
+
+void Render::RenderLifebar(EntityManager& entityManager, uint32_t localID) {
+    for (auto& entity : entityManager.GetEntities<Position, Health>()) {
+        auto& position = entityManager.GetComponent<Position>(entity.id);
+        auto& health = entityManager.GetComponent<Health>(entity.id);
+
+        Color lifeBarColor = GRAY;
+        if (auto* team = entityManager.TryGetComponent<Team>(entity.id)) {
+            if (team->color == TeamColor::Blue) lifeBarColor = BLUE;
+            else lifeBarColor = RED;
+        }
+        if (localID == entity.id) lifeBarColor = GREEN;
+        DrawRectangle(position.x - 10, position.y - 14, 20 * (health.current / health.max), 2, lifeBarColor);
     }
 }

@@ -67,6 +67,7 @@ struct AddEntityPayload {
     uint32_t type;
     float x, y;
     float hp, maxHP;
+    uint8_t team;
 };
 
 struct RemoveEntityPayload {

@@ -77,7 +77,7 @@ int main(int argc, char** argv) {
             std::this_thread::sleep_for(std::chrono::milliseconds(1));
         }
     });
-
+    bool initialized = false; // Temporário
     std::thread simulateThread([&]() {
         using clock = std::chrono::high_resolution_clock;
         auto lastTime = clock::now();
@@ -88,6 +88,27 @@ int main(int argc, char** argv) {
             float deltaTime = elapsed.count();
             if (deltaTime < 0.0f) deltaTime = 0.001f;
             lastTime = now;
+
+            // ===== Generate ===== //
+
+            if (!initialized) {
+                Entity ally = entityManager.CreateEntity();
+                entityManager.AddComponent(ally.id, Type(EntityType::Player));
+                entityManager.AddComponent(ally.id, Position(-160.0f, 0.0f));
+                entityManager.AddComponent(ally.id, Velocity());
+                entityManager.AddComponent(ally.id, Collider(16.0f, 16.0f));
+                entityManager.AddComponent(ally.id, Team(TeamColor::Blue));
+                
+                Entity dummy = entityManager.CreateEntity();
+                entityManager.AddComponent(dummy.id, Type(EntityType::Player));
+                entityManager.AddComponent(dummy.id, Position(160.0f, 0.0f));
+                entityManager.AddComponent(dummy.id, Velocity());
+                entityManager.AddComponent(dummy.id, Collider(16.0f, 16.0f));
+                entityManager.AddComponent(dummy.id, Team(TeamColor::Red));
+                initialized = true;
+            }
+
+            // ===== Process Inputs ===== //
 
             {
                 std::lock_guard<std::mutex> lockInput(inputMutex);
@@ -109,6 +130,7 @@ int main(int argc, char** argv) {
                 auto position = entityManager.TryGetComponent<Position>(entity.id);
                 cout << "Entity[" << entity.id << "]: x: " << position->x << " y: " << position->y << "\n";
             }
+            cout << "EntityManagerSize: " << (int)entityManager.GetEntities().size() << "\n";
 
             std::this_thread::sleep_for(std::chrono::milliseconds(5));
         }
@@ -142,6 +164,9 @@ int main(int argc, char** argv) {
                     auto& position = entityManager.GetComponent<Position>(entity.id);
                     payload.x = position.x;
                     payload.y = position.y;
+                    if (auto* team = entityManager.TryGetComponent<Team>(entity.id)) {
+                        payload.team = (uint8_t)team->color;
+                    }
                     addSnapshot.push_back(payload);
                 }
             }

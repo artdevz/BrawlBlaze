@@ -27,7 +27,7 @@ void Game::Init() {
     networkManager.Start(client.get());
 
     ConnectPayload payload{};
-    const char* nickname = "Artdz2";
+    const char* nickname = "Artdz";
     std::strncpy(payload.nickname, nickname, sizeof(payload.nickname) - 1);
     payload.nickname[sizeof(payload.nickname) - 1] = '\0';
     client->Send(ClientPacketType::Connect, payload);
@@ -42,6 +42,9 @@ void Game::Init() {
             entityManager.AddComponent(entity.id, Type(EntityType::Player));
             entityManager.AddComponent(entity.id, Position(initPayload.x, initPayload.y));
             entityManager.AddComponent(entity.id, Velocity());
+            entityManager.AddComponent(entity.id, Health(100.0f, 100.0f));
+            entityManager.AddComponent(entity.id, Collider(16.0f, 16.0f));
+            entityManager.AddComponent(entity.id, Team(TeamColor::Blue));
             entityManager.AddComponent(entity.id, Sprite("human"));
             localPlayerID = initPayload.entityID;
             break;
@@ -96,6 +99,10 @@ void Game::Update() {
             entityManager.AddComponent(entity.id, Collider(16.0f, 16.0f));
             entityManager.AddComponent(entity.id, Sprite("human"));
         }
+        entityManager.AddComponent(entity.id, Health(100.0f, 100.0f));
+        if (addPayload.team > 0) {
+            entityManager.AddComponent(entity.id, Team((TeamColor)addPayload.team));
+        }
     }
 
     // ===== Interpolation ===== //
@@ -119,8 +126,12 @@ void Game::Draw() {
     ClearBackground(BLACK);
     render.RenderTile(entityManager);
     render.RenderActor(entityManager);
+    render.RenderLifebar(entityManager, localPlayerID);
     DrawRectangle(160, 160, 16, 16, GRAY);
     EndMode2D();
+
+    DrawLine(1280/2, 0, 1280/2, 720, RED);
+    DrawLine(0, 720/2, 1280, 720/2, RED);
 
     std::string entitiesCount = "E: " + std::to_string((int)entityManager.GetEntities().size());
     std::string position = "X: " + std::to_string((float)CameraManager::Get().GetCamera2D().target.x) + " Y: " + std::to_string((float)CameraManager::Get().GetCamera2D().target.y) + " Zoom: " + std::to_string((float)CameraManager::Get().GetCamera2D().zoom);

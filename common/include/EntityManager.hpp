@@ -8,8 +8,10 @@
 #include <vector>
 
 #include "components/Collider.hpp"
+#include "components/Health.hpp"
 #include "components/Position.hpp"
 #include "components/Tag.hpp"
+#include "components/Team.hpp"
 #include "components/Type.hpp"
 #include "components/Velocity.hpp"
 
