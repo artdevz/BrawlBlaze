@@ -60,6 +60,7 @@ struct InitPayload {
 struct EntityStatePayload {
     uint32_t entityID;
     float x, y;
+    float hp;
     uint32_t lastProcessedInput;
 };
 

@@ -178,14 +178,19 @@ int main(int argc, char** argv) {
             {
                 std::lock_guard<std::mutex> lock(entityMutex);
 
+                // ===== Entity States ===== //
+
                 for (auto& entity : entityManager.GetEntities<Position, Velocity>()) {
                     EntityStatePayload payload{};
                     payload.entityID = entity.id;
                     auto& position = entityManager.GetComponent<Position>(entity.id);
                     payload.x = position.x;
                     payload.y = position.y;
+                    if (auto* health = entityManager.TryGetComponent<Health>(entity.id)) payload.hp = health->current;
                     stateSnapshot.push_back(payload);
                 }
+
+                // ===== Add ===== //
 
                 for (auto& entity : entityManager.GetEntities<Position>()) {
                     AddEntityPayload payload{};
@@ -205,6 +210,8 @@ int main(int argc, char** argv) {
                     }
                     addSnapshot.push_back(payload);
                 }
+
+                // ===== Remove ===== //
 
                 for (auto& entity : entityManager.GetEntities<RemoveTag>()) {
                     RemoveEntityPayload payload{};

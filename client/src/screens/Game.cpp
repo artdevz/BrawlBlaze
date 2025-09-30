@@ -124,6 +124,7 @@ void Game::Update() {
             position->x = statePayload.x;
             position->y = statePayload.y;
         }
+        if (auto* health = entityManager.TryGetComponent<Health>(statePayload.entityID)) health->current = statePayload.hp;
     }
 
     // ===== Despawn ===== //
