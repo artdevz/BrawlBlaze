@@ -8,6 +8,7 @@
 
 #include "../../common/include/EntityManager.hpp"
 
+#include "systems/Combat.hpp"
 #include "../../common/include/systems/Movement.hpp"
 
 #include "components/Lifetime.hpp"
@@ -21,6 +22,7 @@ int main(int argc, char** argv) {
     if (!server.Start(8080)) return 1;
 
     EntityManager entityManager;
+    Combat combat;
     Movement movement;
 
     bool running = true;
@@ -130,21 +132,23 @@ int main(int argc, char** argv) {
                     }
 
                     if (input.isMouseUsed) {
-                        cout << "Mouse usado!\n";
-                        cout << "TargetX: " << input.targetX << " TargetY: " << input.targetY << "\n";
+                        // cout << "Mouse usado!\n";
+                        // cout << "TargetX: " << input.targetX << " TargetY: " << input.targetY << "\n";
                         if (entityManager.GetEntities().size() > 3) continue; // Temporário
                         Entity projectile = entityManager.CreateEntity();
                         entityManager.AddComponent(projectile.id, Type(EntityType::Projectile));
                         if (auto* origin = entityManager.TryGetComponent<Position>(input.playerID)) {
                             entityManager.AddComponent(projectile.id, Position(origin->x, origin->y));
                             entityManager.AddComponent(projectile.id, Velocity(600.0f, (input.targetX - origin->x), (input.targetY - origin->y)));
-                            entityManager.AddComponent(projectile.id, Collider(4.0f, 4.0f));
+                            // entityManager.AddComponent(projectile.id, Collider(4.0f, 4.0f));
                             entityManager.AddComponent(projectile.id, Lifetime(100.0f));
                             entityManager.AddComponent(projectile.id, Projectile(input.playerID));
+                            entityManager.AddComponent(projectile.id, Team(entityManager.GetComponent<Team>(input.playerID).color));
                         }
                     }
                 }
             }
+            combat.HandleProjectiles(entityManager);
             movement.Move(entityManager, deltaTime);
 
             for (auto entity : entityManager.GetEntities<Lifetime>()) {
@@ -152,7 +156,7 @@ int main(int argc, char** argv) {
                 lifetime.lifespan -= 1.0f;
                 //cout << "Entity[" << entity.id << "] Lifetime: " << lifetime.lifespan << "\n";
                 if (lifetime.lifespan <= 0.0f) {
-                    cout << "[Server] Entity ID: " << entity.id << " expired.\n";
+                    // cout << "[Server] Entity ID: " << entity.id << " expired.\n";
                     entityManager.AddComponent(entity.id, RemoveTag());
                 }
             }
@@ -218,7 +222,7 @@ int main(int argc, char** argv) {
                     payload.entityID = entity.id;
                     removeSnapshot.push_back(payload);
                     entityManager.DeleteEntity(entity.id);
-                    cout << "[Server] Entity ID: " << entity.id << " removed.\n";
+                    // cout << "[Server] Entity ID: " << entity.id << " removed.\n";
                 }
             }
 

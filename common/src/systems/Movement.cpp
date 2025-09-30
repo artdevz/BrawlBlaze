@@ -35,6 +35,7 @@ void Movement::Move(EntityManager& entityManager, float deltaTime) {
                 if (auto* projectile = entityManager.TryGetComponent<Projectile>(entity.id)) {
                     if (other.id == projectile->originID) continue;
 
+                    /*
                     if (auto* health = entityManager.TryGetComponent<Health>(other.id)) {
                         if (entityManager.TryGetComponent<RemoveTag>(entity.id)) continue;
                         if (auto* team = entityManager.TryGetComponent<Team>(projectile->originID)) {
@@ -52,8 +53,8 @@ void Movement::Move(EntityManager& entityManager, float deltaTime) {
                             std::cout << "[Server] Entity ID: " << other.id << " died.\n";
                             entityManager.AddComponent(other.id, RemoveTag());
                         }
-                    }
-                    entityManager.AddComponent(entity.id, RemoveTag());
+                    }*/
+                    // entityManager.AddComponent(entity.id, RemoveTag());
                 }
 
                 collided = true;
