@@ -21,6 +21,7 @@ void Combat::HandleProjectiles(EntityManager& entityManager) {
             // std::cout << "Entity ID: " << entity.id << " checking collision with Entity ID: " << other.id << "\n";
             if (otherCollider->Intersects({entityManager.GetComponent<Position>(entity.id).x, entityManager.GetComponent<Position>(entity.id).y}, *otherCollider, *otherPosition)) {
                 std::cout << "Entity ID: " << entity.id << " collided with Entity ID: " << other.id << "\n";
+                // TODO: Colisão com outras entidades nunca acontece devido MoveSystem, então o Collision de Projéteis tem q ser aqui
                 // if (auto* projectile = entityManager.TryGetComponent<Projectile>(entity.id)) {
                 //     if (other.id == projectile->originID) {
                 //         std::cout << "Colidiu com o OriginID!" << other.id << " " << projectile->originID << " \n";
