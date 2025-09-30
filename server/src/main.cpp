@@ -138,8 +138,9 @@ int main(int argc, char** argv) {
                         if (auto* origin = entityManager.TryGetComponent<Position>(input.playerID)) {
                             entityManager.AddComponent(projectile.id, Position(origin->x, origin->y));
                             entityManager.AddComponent(projectile.id, Velocity(600.0f, (input.targetX - origin->x), (input.targetY - origin->y)));
-                            // entityManager.AddComponent(projectile.id, Collider(4.0f, 4.0f));
+                            entityManager.AddComponent(projectile.id, Collider(4.0f, 4.0f));
                             entityManager.AddComponent(projectile.id, Lifetime(100.0f));
+                            entityManager.AddComponent(projectile.id, Projectile(input.playerID));
                         }
                     }
                 }
@@ -158,7 +159,7 @@ int main(int argc, char** argv) {
 
             for (auto entity : entityManager.GetEntities<Position>()) {
                 auto position = entityManager.TryGetComponent<Position>(entity.id);
-                cout << "Entity[" << entity.id << "]: x: " << position->x << " y: " << position->y << "\n";
+                // cout << "Entity[" << entity.id << "]: x: " << position->x << " y: " << position->y << "\n";
             }
             // cout << "EntityManagerSize: " << (int)entityManager.GetEntities().size() << "\n";
 

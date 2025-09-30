@@ -16,7 +16,7 @@ void Movement::Move(EntityManager& entityManager, float deltaTime) {
             velocity.dy = (velocity.dy / magnitude) * speed;
         }
 
-        std::cout << "EntityID: [" << entity.id << "]: Velocity: dx: " << velocity.dx << " dy: " << velocity.dy << " MoveSpeed: " << velocity.maxSpeed << "\n";
+        // std::cout << "EntityID: [" << entity.id << "]: Velocity: dx: " << velocity.dx << " dy: " << velocity.dy << " MoveSpeed: " << velocity.maxSpeed << "\n";
 
         auto newX = position.x + velocity.dx * deltaTime;
         auto newY = position.y + velocity.dy * deltaTime;
@@ -25,6 +25,21 @@ void Movement::Move(EntityManager& entityManager, float deltaTime) {
         for (auto& other : entityManager.GetEntities<Collider>()) {
             if (!entityManager.TryGetComponent<Collider>(entity.id)) break;
             if (other.id == entity.id) continue;
+
+            // Projectiles:
+
+            if (auto* type = entityManager.TryGetComponent<Type>(other.id); type && type->type == EntityType::Projectile) continue;
+
+            if (auto* projectile = entityManager.TryGetComponent<Projectile>(entity.id)) {
+                if (other.id == projectile->originID) continue;
+
+                // To-Do: Dano em que atingir
+                // To-Do: Destruir projétil ao atingir
+                // To-Do: Não ter Fogo-Amigo
+            }
+            
+            // Phyics:
+
             auto* otherPosition = entityManager.TryGetComponent<Position>(other.id);
             auto* otherCollider = entityManager.TryGetComponent<Collider>(other.id);
 

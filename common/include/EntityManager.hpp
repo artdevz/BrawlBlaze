@@ -10,6 +10,7 @@
 #include "components/Collider.hpp"
 #include "components/Health.hpp"
 #include "components/Position.hpp"
+#include "components/Projectile.hpp"
 #include "components/Tag.hpp"
 #include "components/Team.hpp"
 #include "components/Type.hpp"
