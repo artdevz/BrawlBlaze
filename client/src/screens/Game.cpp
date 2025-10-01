@@ -108,6 +108,7 @@ void Game::Update() {
             // entityManager.AddComponent(entity.id, Velocity());
             // entityManager.AddComponent(entity.id, Collider(4.0f, 4.0f));
             entityManager.AddComponent(entity.id, Sprite("bullet"));
+            entityManager.AddComponent(entity.id, Projectile(localPlayerID));
         }
         entityManager.AddComponent(entity.id, Health(addPayload.hp, addPayload.maxHP));
         if (addPayload.team > 0) {
@@ -147,7 +148,7 @@ void Game::Draw() {
     BeginMode2D(CameraManager::Get().GetCamera2D());
     ClearBackground(BLACK);
     render.RenderTile(entityManager);
-    render.RenderActor(entityManager);
+    render.RenderActor(entityManager, localPlayerID);
     render.RenderLifebar(entityManager, localPlayerID);
     DrawRectangle(160-8, 160-8, 16, 16, GRAY);
     EndMode2D();
