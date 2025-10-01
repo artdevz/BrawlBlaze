@@ -106,7 +106,7 @@ void Game::Update() {
         }
         if (addPayload.type == (uint16_t)EntityType::Projectile) {
             // entityManager.AddComponent(entity.id, Velocity());
-            entityManager.AddComponent(entity.id, Collider(4.0f, 4.0f));
+            // entityManager.AddComponent(entity.id, Collider(4.0f, 4.0f));
             entityManager.AddComponent(entity.id, Sprite("bullet"));
         }
         entityManager.AddComponent(entity.id, Health(addPayload.hp, addPayload.maxHP));

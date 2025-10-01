@@ -135,7 +135,9 @@ int main(int argc, char** argv) {
                         // cout << "Mouse usado!\n";
                         // cout << "TargetX: " << input.targetX << " TargetY: " << input.targetY << "\n";
                         if (entityManager.GetEntities().size() > 3) continue; // Temporário
+                        cout << "[Server] Player ID: " << input.playerID << " fired a projectile!\n";
                         Entity projectile = entityManager.CreateEntity();
+                        cout << "[Server] Projectile ID: " << projectile.id << "\n";
                         entityManager.AddComponent(projectile.id, Type(EntityType::Projectile));
                         if (auto* origin = entityManager.TryGetComponent<Position>(input.playerID)) {
                             entityManager.AddComponent(projectile.id, Position(origin->x, origin->y));
@@ -145,13 +147,15 @@ int main(int argc, char** argv) {
                             entityManager.AddComponent(projectile.id, Projectile(input.playerID));
                             entityManager.AddComponent(projectile.id, Team(entityManager.GetComponent<Team>(input.playerID).color));
                         }
+                        // cout << "[Server] Projectile spawned at (" << entityManager.GetComponent<Position>(projectile.id).x << ", " << entityManager.GetComponent<Position>(projectile.id).y << ")\n";
                     }
                 }
             }
-            combat.HandleProjectiles(entityManager);
             movement.Move(entityManager, deltaTime);
+            combat.HandleProjectiles(entityManager);
 
             for (auto entity : entityManager.GetEntities<Lifetime>()) {
+                if (entityManager.TryGetComponent<RemoveTag>(entity.id)) continue;
                 auto& lifetime = entityManager.GetComponent<Lifetime>(entity.id);
                 lifetime.lifespan -= 1.0f;
                 //cout << "Entity[" << entity.id << "] Lifetime: " << lifetime.lifespan << "\n";
