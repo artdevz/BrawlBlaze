@@ -27,7 +27,7 @@ void Game::Init() {
     networkManager.Start(client.get());
 
     ConnectPayload payload{};
-    const char* nickname = "Artdz";
+    const char* nickname = "Artdz2";
     std::strncpy(payload.nickname, nickname, sizeof(payload.nickname) - 1);
     payload.nickname[sizeof(payload.nickname) - 1] = '\0';
     client->Send(ClientPacketType::Connect, payload);
@@ -42,9 +42,12 @@ void Game::Init() {
             entityManager.AddComponent(entity.id, Type(EntityType::Player));
             entityManager.AddComponent(entity.id, Position(initPayload.x, initPayload.y));
             entityManager.AddComponent(entity.id, Velocity(100.0f));
-            entityManager.AddComponent(entity.id, Health(100.0f, 100.0f));
+            entityManager.AddComponent(entity.id, Health(initPayload.hp, initPayload.maxHP));
             entityManager.AddComponent(entity.id, Collider(16.0f, 16.0f));
-            entityManager.AddComponent(entity.id, Team(TeamColor::Blue));
+            entityManager.AddComponent(entity.id, Player());
+            std::strncpy(entityManager.GetComponent<Player>(entity.id).nickname, initPayload.nickname, sizeof(initPayload.nickname) - 1);
+            entityManager.GetComponent<Player>(entity.id).nickname[sizeof(initPayload.nickname) - 1] = '\0';
+            entityManager.AddComponent(entity.id, Team(initPayload.team > 0 ? (TeamColor)initPayload.team : TeamColor::None));
             entityManager.AddComponent(entity.id, Sprite("human"));
             localPlayerID = initPayload.entityID;
             break;
@@ -102,6 +105,11 @@ void Game::Update() {
         entityManager.AddComponent(entity.id, Position(addPayload.x, addPayload.y));
         if (addPayload.type == (uint16_t)EntityType::Player) {
             entityManager.AddComponent(entity.id, Collider(16.0f, 16.0f));
+            entityManager.AddComponent(entity.id, Player());
+            if (addPayload.nickname[0] != '\0') {
+                std::strncpy(entityManager.GetComponent<Player>(entity.id).nickname, addPayload.nickname, sizeof(addPayload.nickname) - 1);
+                entityManager.GetComponent<Player>(entity.id).nickname[sizeof(addPayload.nickname) - 1] = '\0';
+            }
             entityManager.AddComponent(entity.id, Sprite("human"));
         }
         if (addPayload.type == (uint16_t)EntityType::Projectile) {

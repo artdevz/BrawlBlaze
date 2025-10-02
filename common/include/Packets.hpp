@@ -55,6 +55,7 @@ struct InitPayload {
     char nickname[32];
     float x, y;
     float hp, maxHP;
+    uint8_t team;
 };
 
 struct EntityStatePayload {
@@ -69,6 +70,7 @@ struct AddEntityPayload {
     uint16_t type;
     float x, y;
     float hp, maxHP;
+    char nickname[32];
     uint8_t team;
 };
 

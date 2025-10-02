@@ -26,6 +26,7 @@ int main(int argc, char** argv) {
     Movement movement;
 
     bool running = true;
+    uint8_t playersConnected = 0;
 
     std::queue<InputPayload> inputQueue;
     std::mutex inputMutex;
@@ -53,13 +54,18 @@ int main(int argc, char** argv) {
                             entityManager.AddComponent(newPlayer.id, Velocity(100.0f, 100.0f));
                             entityManager.AddComponent(newPlayer.id, Collider(16.0f, 16.0f));
                             entityManager.AddComponent(newPlayer.id, Health(100.0f, 100.0f));
-                            entityManager.AddComponent(newPlayer.id, Team(TeamColor::Blue));
+                            entityManager.AddComponent(newPlayer.id, Player());
+                            std::strncpy(entityManager.GetComponent<Player>(newPlayer.id).nickname, payload.nickname, sizeof(payload.nickname) - 1);
+                            entityManager.GetComponent<Player>(newPlayer.id).nickname[sizeof(payload.nickname) - 1] = '\0';
+                            // Alterna entre times
+                            entityManager.AddComponent(newPlayer.id, Team( (playersConnected % 2? TeamColor::Red : TeamColor::Blue) ));
                         }
 
                         {
                             server.RegisterClient(newPlayer.id, packet.addr);
                         }
                         cout << "[Server] " << payload.nickname << " joined the game\n";
+                        cout << "[Server] " << (int)++playersConnected << "/255 players connected\n";
 
                         InitPayload initPayload{};
                         initPayload.entityID = newPlayer.id;
@@ -67,6 +73,13 @@ int main(int argc, char** argv) {
                             initPayload.x = position->x;
                             initPayload.y = position->y;
                         }
+                        if (auto* health = entityManager.TryGetComponent<Health>(newPlayer.id)) {
+                            initPayload.hp = health->current;
+                            initPayload.maxHP = health->max;
+                        }
+                        initPayload.team = (uint8_t)entityManager.GetComponent<Team>(newPlayer.id).color;
+                        std::strncpy(initPayload.nickname, payload.nickname, sizeof(initPayload.nickname) - 1);
+                        initPayload.nickname[sizeof(initPayload.nickname) - 1] = '\0';
                         for (int i = 0; i < 1000; i++) server.Send(ServerPacketType::Init, initPayload, packet.addr);
                     }
 
@@ -104,6 +117,9 @@ int main(int argc, char** argv) {
                 entityManager.AddComponent(ally.id, Velocity(100.0f));
                 entityManager.AddComponent(ally.id, Collider(16.0f, 16.0f));
                 entityManager.AddComponent(ally.id, Health(100.0f, 100.0f));
+                entityManager.AddComponent(ally.id, Player());
+                std::strncpy(entityManager.GetComponent<Player>(ally.id).nickname, "BlueDummy", sizeof("BlueDummy") - 1);
+                entityManager.GetComponent<Player>(ally.id).nickname[sizeof("BlueDummy") - 1] = '\0';
                 entityManager.AddComponent(ally.id, Team(TeamColor::Blue));
                 
                 Entity dummy = entityManager.CreateEntity();
@@ -112,6 +128,9 @@ int main(int argc, char** argv) {
                 entityManager.AddComponent(dummy.id, Velocity(100.0f));
                 entityManager.AddComponent(dummy.id, Collider(16.0f, 16.0f));
                 entityManager.AddComponent(dummy.id, Health(100.0f, 100.0f));
+                entityManager.AddComponent(dummy.id, Player());
+                std::strncpy(entityManager.GetComponent<Player>(dummy.id).nickname, "RedDummy", sizeof("RedDummy") - 1);
+                entityManager.GetComponent<Player>(dummy.id).nickname[sizeof("RedDummy") - 1] = '\0';
                 entityManager.AddComponent(dummy.id, Team(TeamColor::Red));
                 initialized = true;
             }
@@ -134,7 +153,7 @@ int main(int argc, char** argv) {
                     if (input.isMouseUsed) {
                         // cout << "Mouse usado!\n";
                         // cout << "TargetX: " << input.targetX << " TargetY: " << input.targetY << "\n";
-                        if (entityManager.GetEntities().size() > 3) continue; // Temporário
+                        if (entityManager.GetEntities().size() > 4) continue; // Temporário
                         cout << "[Server] Player ID: " << input.playerID << " fired a projectile!\n";
                         Entity projectile = entityManager.CreateEntity();
                         cout << "[Server] Projectile ID: " << projectile.id << "\n";
@@ -142,7 +161,6 @@ int main(int argc, char** argv) {
                         if (auto* origin = entityManager.TryGetComponent<Position>(input.playerID)) {
                             entityManager.AddComponent(projectile.id, Position(origin->x, origin->y));
                             entityManager.AddComponent(projectile.id, Velocity(600.0f, (input.targetX - origin->x), (input.targetY - origin->y)));
-                            // entityManager.AddComponent(projectile.id, Collider(4.0f, 4.0f));
                             entityManager.AddComponent(projectile.id, Lifetime(100.0f));
                             entityManager.AddComponent(projectile.id, Projectile(input.playerID));
                             entityManager.AddComponent(projectile.id, Team(entityManager.GetComponent<Team>(input.playerID).color));
@@ -212,6 +230,10 @@ int main(int argc, char** argv) {
                     if (auto* health = entityManager.TryGetComponent<Health>(entity.id)) {
                         payload.hp = health->current;
                         payload.maxHP = health->max;
+                    }
+                    if (auto* player = entityManager.TryGetComponent<Player>(entity.id)) {
+                        std::strncpy(payload.nickname, player->nickname, sizeof(payload.nickname) - 1);
+                        payload.nickname[sizeof(payload.nickname) - 1] = '\0';
                     }
                     if (auto* team = entityManager.TryGetComponent<Team>(entity.id)) {
                         payload.team = (uint8_t)team->color;

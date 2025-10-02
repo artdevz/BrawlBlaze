@@ -48,5 +48,7 @@ void Render::RenderLifebar(EntityManager& entityManager, uint32_t localID) {
         }
         if (localID == entity.id) lifeBarColor = GREEN;
         DrawRectangle(position.x - 10, position.y - 14, 20 * (health.current / health.max), 2, lifeBarColor);
+
+        if (auto* player = entityManager.TryGetComponent<Player>(entity.id)) DrawText(player->nickname, position.x - MeasureText(player->nickname, 6)/2, position.y - 26, 6, lifeBarColor);
     }
 }
