@@ -33,6 +33,8 @@ void Combat::HandleProjectiles(EntityManager& entityManager) {
                     std::cout << "[Server] Entity ID: " << other.id << " died.\n";
                     if (auto* player = entityManager.TryGetComponent<Player>(other.id)) {
                         std::cout << "[Server] Player " << player->nickname << " has been killed!\n";
+                        if (auto* kda = entityManager.TryGetComponent<KDA>(other.id)) kda->deaths++;
+                        if (auto* projectile = entityManager.TryGetComponent<Projectile>(entity.id)) { if (auto* originKDA = entityManager.TryGetComponent<KDA>(projectile->originID)) originKDA->kills++; }
                         entityManager.AddComponent(other.id, Dead());
                         continue;
                     }

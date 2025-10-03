@@ -167,8 +167,8 @@ void Game::Draw() {
     EndMode2D();
     if (auto* hp = entityManager.TryGetComponent<Health>(localPlayerID)) {
         if (hp->current <= 0.0f) {
-            DrawText("You are dead!", GetScreenWidth()/2 - MeasureText("You are dead!", 40)/2, GetScreenHeight()/2 - 20, 40, RED);
             DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), Fade(GRAY, 0.5f));
+            DrawText("You are dead!", GetScreenWidth()/2 - MeasureText("You are dead!", 40)/2, GetScreenHeight()/2 - 20, 40, RED);
         }
     }
 
