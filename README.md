@@ -37,7 +37,12 @@ Execução Client: ```./bin/client/Brawlblaze```
 ## Detalhes do Jogo:
 
 - **Categoria:** MOBA: 3 vs 3, 2D
-- **Sobre:** No primeiro minuto inicial cada Jogador esconde sua bandeira, tendo um total de 3 bandeiras por time. No restante os times batalharão pela Arena para capturar a bandeira inimiga e levar para a base aliada e defender suas bandeiras. O Time que conseguir capturar as 3 bandeiras primeiro vence. O tempo de respawn é de aproximadamente 15 segundos. Extra: Um Boss elemental irá nascer aos 5:00, sendo Terra: (+Armadura), Fogo(+Dano), Ar(+Velocidade), Água(+Regeneração), o time que derrotar o boss (último a da dano) irá receber esses powerups.
+- **Sobre:** No primeiro minuto inicial cada Jogador esconde sua bandeira, tendo um total de 3 bandeiras por time. 
+No restante os times batalharão pela Arena para capturar a bandeira inimiga e levar para a base aliada e defender suas bandeiras. 
+O Time que conseguir capturar as 3 bandeiras primeiro vence.
+O tempo de respawn é de aproximadamente 15 segundos.
+Extra: Um Boss elemental irá nascer aos 5:00, sendo Terra: (+Armadura), Fogo(+Dano), Ar(+Velocidade), Água(+Regeneração). 
+O time que derrotar o boss (último a da dano) irá receber esses powerups.
 
 ---
 
