@@ -241,6 +241,7 @@ int main(int argc, char** argv) {
             std::vector<EntityStatePayload> stateSnapshot;
             std::vector<AddEntityPayload> addSnapshot;
             std::vector<RemoveEntityPayload> removeSnapshot;
+            std::vector<CombatStatsPaylod> combatStatsSnapshot;
 
             // ===== Generate ===== //
 
@@ -293,6 +294,18 @@ int main(int argc, char** argv) {
                     entityManager.DeleteEntity(entity.id);
                     // cout << "[Server] Entity ID: " << entity.id << " removed.\n";
                 }
+
+                // ===== Combat Stats ===== //
+
+                for (auto& entity : entityManager.GetEntities<KDA>()) {
+                    CombatStatsPaylod payload{};
+                    payload.entityID = entity.id;
+                    auto& kda = entityManager.GetComponent<KDA>(entity.id);
+                    payload.kills = kda.kills;
+                    payload.deaths = kda.deaths;
+                    payload.assists = kda.assists;
+                    combatStatsSnapshot.push_back(payload);
+                }
             }
 
             // ===== Send ===== //
@@ -310,6 +323,11 @@ int main(int argc, char** argv) {
             if (!removeSnapshot.empty()) {
                 std::lock_guard<std::mutex> lock(serverMutex);
                 server.Broadcast<RemoveEntityPayload>(ServerPacketType::Remove, removeSnapshot);
+            }
+
+            if (!combatStatsSnapshot.empty()) {
+                std::lock_guard<std::mutex> lock(serverMutex);
+                server.Broadcast<CombatStatsPaylod>(ServerPacketType::CombatStats, combatStatsSnapshot);
             }
 
             std::this_thread::sleep_for(std::chrono::milliseconds(50));

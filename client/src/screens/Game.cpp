@@ -45,6 +45,7 @@ void Game::Init() {
             entityManager.AddComponent(entity.id, Health(initPayload.hp, initPayload.maxHP));
             entityManager.AddComponent(entity.id, Collider(16.0f, 16.0f));
             entityManager.AddComponent(entity.id, Player());
+            entityManager.AddComponent(entity.id, KDA());
             std::strncpy(entityManager.GetComponent<Player>(entity.id).nickname, initPayload.nickname, sizeof(initPayload.nickname) - 1);
             entityManager.GetComponent<Player>(entity.id).nickname[sizeof(initPayload.nickname) - 1] = '\0';
             entityManager.AddComponent(entity.id, Team(initPayload.team > 0 ? (TeamColor)initPayload.team : TeamColor::None));
@@ -106,6 +107,7 @@ void Game::Update() {
         if (addPayload.type == (uint16_t)EntityType::Player) {
             entityManager.AddComponent(entity.id, Collider(16.0f, 16.0f));
             entityManager.AddComponent(entity.id, Player());
+            entityManager.AddComponent(entity.id, KDA());
             if (addPayload.nickname[0] != '\0') {
                 std::strncpy(entityManager.GetComponent<Player>(entity.id).nickname, addPayload.nickname, sizeof(addPayload.nickname) - 1);
                 entityManager.GetComponent<Player>(entity.id).nickname[sizeof(addPayload.nickname) - 1] = '\0';
@@ -153,6 +155,17 @@ void Game::Update() {
         }
     }
 
+    // ===== Combat Stats ===== //
+
+    CombatStatsPaylod combatStatsPayload{};
+    while (networkManager.PoolPacket(networkManager.combatStatsQueue, networkManager.combatStatsMutex, combatStatsPayload)) {
+        if (auto* kda = entityManager.TryGetComponent<KDA>(combatStatsPayload.entityID)) {
+            kda->kills = combatStatsPayload.kills;
+            kda->deaths = combatStatsPayload.deaths;
+            kda->assists = combatStatsPayload.assists;
+        }
+    }
+
     // ===== Camera ===== //
     
     if (auto* position = entityManager.TryGetComponent<Position>(localPlayerID)) CameraManager::Get().Update({position->x, position->y});
@@ -176,6 +189,10 @@ void Game::Draw() {
     std::string position = "X: " + std::to_string((float)CameraManager::Get().GetCamera2D().target.x) + " Y: " + std::to_string((float)CameraManager::Get().GetCamera2D().target.y) + " Zoom: " + std::to_string((float)CameraManager::Get().GetCamera2D().zoom);
     DrawText(entitiesCount.c_str(), 10, 30, 20, WHITE);
     DrawText(position.c_str(), 10, 50, 20, WHITE);
+    if (auto* kda = entityManager.TryGetComponent<KDA>(localPlayerID)) {
+        std::string kdaText = "KDA: " + std::to_string(kda->kills) + " / " + std::to_string(kda->deaths) + " / " + std::to_string(kda->assists);
+        DrawText(kdaText.c_str(), 10, 70, 20, WHITE);
+    }
 
     DrawFPS(10, 10);
 }

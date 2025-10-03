@@ -22,6 +22,9 @@ public:
     std::queue<RemoveEntityPayload> removeQueue;
     std::mutex removeMutex;
 
+    std::queue<CombatStatsPaylod> combatStatsQueue;
+    std::mutex combatStatsMutex;
+
     void Start(Client* client);
     void Stop();
 
