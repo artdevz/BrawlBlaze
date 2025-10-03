@@ -164,11 +164,13 @@ void Game::Draw() {
     render.RenderTile(entityManager);
     render.RenderActor(entityManager, localPlayerID);
     render.RenderLifebar(entityManager, localPlayerID);
-    DrawRectangle(160-8, 160-8, 16, 16, GRAY);
     EndMode2D();
-
-    DrawLine(1280/2, 0, 1280/2, 720, RED);
-    DrawLine(0, 720/2, 1280, 720/2, RED);
+    if (auto* hp = entityManager.TryGetComponent<Health>(localPlayerID)) {
+        if (hp->current <= 0.0f) {
+            DrawText("You are dead!", GetScreenWidth()/2 - MeasureText("You are dead!", 40)/2, GetScreenHeight()/2 - 20, 40, RED);
+            DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), Fade(GRAY, 0.5f));
+        }
+    }
 
     std::string entitiesCount = "E: " + std::to_string((int)entityManager.GetEntities().size());
     std::string position = "X: " + std::to_string((float)CameraManager::Get().GetCamera2D().target.x) + " Y: " + std::to_string((float)CameraManager::Get().GetCamera2D().target.y) + " Zoom: " + std::to_string((float)CameraManager::Get().GetCamera2D().zoom);

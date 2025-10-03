@@ -31,6 +31,11 @@ void Combat::HandleProjectiles(EntityManager& entityManager) {
                 health->current -= 10.0f;
                 if (health->current <= 0.0f) {
                     std::cout << "[Server] Entity ID: " << other.id << " died.\n";
+                    if (auto* player = entityManager.TryGetComponent<Player>(other.id)) {
+                        std::cout << "[Server] Player " << player->nickname << " has been killed!\n";
+                        entityManager.AddComponent(other.id, Dead());
+                        continue;
+                    }
                     entityManager.AddComponent(other.id, RemoveTag()); 
                 }
             }

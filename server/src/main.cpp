@@ -154,6 +154,10 @@ int main(int argc, char** argv) {
                     auto input = inputQueue.front();
                     inputQueue.pop();
 
+                    auto* hp = entityManager.TryGetComponent<Health>(input.playerID);
+                    if (!hp) continue;
+                    if (hp->current <= 0.0f) continue;
+
                     if (auto* velocity = entityManager.TryGetComponent<Velocity>(input.playerID)) {
                         float speed = 100.0f;
                         if (input.x > 0) {input.x = 1.0f;} if (input.x < 0) {input.x = -1.0f;} if (input.y > 0) {input.y = 1.0f;} if (input.y < 0) {input.y = -1.0f;}
@@ -181,6 +185,26 @@ int main(int argc, char** argv) {
             }
             movement.Move(entityManager, deltaTime);
             combat.HandleProjectiles(entityManager);
+
+            for (auto entity : entityManager.GetEntities<Dead>()) {
+                auto& dead = entityManager.GetComponent<Dead>(entity.id);
+                dead.respawnTime--;
+                if (dead.respawnTime <= 0) {
+                    if (auto* player = entityManager.TryGetComponent<Player>(entity.id)) {
+                        if (auto* position = entityManager.TryGetComponent<Position>(entity.id)) {
+                            position->x = (entityManager.GetComponent<Team>(entity.id).color == TeamColor::Blue ? -128.0f : 128.0f);
+                            position->y = 0.0f;
+                        }
+                        if (auto* health = entityManager.TryGetComponent<Health>(entity.id)) {
+                            health->current = health->max;
+                        }
+                        // entityManager.GetComponent<Dead>(entity.id).respawnTime = 3000;
+                        // entityManager.TryGetComponent<Dead>(entity.id);
+                        entityManager.RemoveComponent<Dead>(entity.id);
+                        cout << "[Server] Player " << player->nickname << " has respawned!\n";
+                    }
+                }
+            }
 
             for (auto entity : entityManager.GetEntities<Lifetime>()) {
                 if (entityManager.TryGetComponent<RemoveTag>(entity.id)) continue;

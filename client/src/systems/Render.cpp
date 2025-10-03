@@ -17,6 +17,7 @@ void Render::RenderTile(EntityManager& entityManager) {
 void Render::RenderActor(EntityManager& entityManager, uint32_t localID) {
     for (auto& entity : entityManager.GetEntities<Position, Sprite>()) {
         if (entityManager.TryGetComponent<TileTag>(entity.id)) continue;
+
         auto& position = entityManager.GetComponent<Position>(entity.id);
         auto& sprite = entityManager.GetComponent<Sprite>(entity.id);
 
@@ -31,6 +32,10 @@ void Render::RenderActor(EntityManager& entityManager, uint32_t localID) {
             continue;
         }
 
+        if (auto* hp = entityManager.TryGetComponent<Health>(entity.id)) {
+            if (hp->current <= 0.0f) continue;
+        }
+
         DrawTexture(AssetManager::Get().GetTexture(sprite.id), position.x-8, position.y-8, WHITE);
     }
 }
@@ -39,6 +44,8 @@ void Render::RenderLifebar(EntityManager& entityManager, uint32_t localID) {
     for (auto& entity : entityManager.GetEntities<Position, Health>()) {
         auto& position = entityManager.GetComponent<Position>(entity.id);
         auto& health = entityManager.GetComponent<Health>(entity.id);
+
+        if (health.current <= 0.0f) continue;
 
         Color lifeBarColor = RED;
         if (auto* localTeam = entityManager.TryGetComponent<Team>(localID)) {
