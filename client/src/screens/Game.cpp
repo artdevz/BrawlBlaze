@@ -112,6 +112,12 @@ void Game::Update() {
             }
             entityManager.AddComponent(entity.id, Sprite("human"));
         }
+        if (addPayload.type == (uint16_t)EntityType::FloorTile) {
+            entityManager.AddComponent(entity.id, Type(EntityType::FloorTile));
+            entityManager.AddComponent(entity.id, TileTag());
+            entityManager.AddComponent(entity.id, Position(addPayload.x, addPayload.y));
+            entityManager.AddComponent(entity.id, Sprite("floor"));
+        }
         if (addPayload.type == (uint16_t)EntityType::Projectile) {
             // entityManager.AddComponent(entity.id, Velocity());
             // entityManager.AddComponent(entity.id, Collider(4.0f, 4.0f));
@@ -140,7 +146,7 @@ void Game::Update() {
 
     RemoveEntityPayload removePayload{};
     while (networkManager.PoolPacket(networkManager.removeQueue, networkManager.removeMutex, removePayload)) {
-        if (auto* position = entityManager.TryGetComponent<Position>(removePayload.entityID)) {
+        if (removePayload.entityID) {
             std::cout << "Removing Entity ID: " << removePayload.entityID << "\n";
             entityManager.DeleteEntity(removePayload.entityID);
             spawnedEntities.erase(removePayload.entityID);

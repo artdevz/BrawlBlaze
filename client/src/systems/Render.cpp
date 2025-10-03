@@ -6,8 +6,7 @@
 #include "components/Sprite.hpp"
 
 void Render::RenderTile(EntityManager& entityManager) {
-    for (auto& entity : entityManager.GetEntities<Position, Sprite>()) {
-        if (!entityManager.TryGetComponent<TileTag>(entity.id)) continue;
+    for (auto& entity : entityManager.GetEntities<TileTag, Position, Sprite>()) {
         auto& position = entityManager.GetComponent<Position>(entity.id);
         auto& sprite = entityManager.GetComponent<Sprite>(entity.id);
 
@@ -17,10 +16,11 @@ void Render::RenderTile(EntityManager& entityManager) {
 
 void Render::RenderActor(EntityManager& entityManager, uint32_t localID) {
     for (auto& entity : entityManager.GetEntities<Position, Sprite>()) {
+        if (entityManager.TryGetComponent<TileTag>(entity.id)) continue;
         auto& position = entityManager.GetComponent<Position>(entity.id);
         auto& sprite = entityManager.GetComponent<Sprite>(entity.id);
 
-        if (auto* projectile = entityManager.TryGetComponent<Projectile>(entity.id)) {
+        if (entityManager.TryGetComponent<Projectile>(entity.id)) {
             auto* localTeam = entityManager.TryGetComponent<Team>(localID);
             auto* projectileTeam = entityManager.TryGetComponent<Team>(entity.id);
             if (!localTeam || !projectileTeam) continue;

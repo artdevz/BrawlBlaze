@@ -89,6 +89,9 @@ int main(int argc, char** argv) {
                         inputQueue.push(payload);
                         break;
                     }
+                    case ClientPacketType::Message: {
+                        break;
+                    }
                 }
             }
             catch (const std::exception& e) { std::cerr << "[Server] Failed to parse packet: " << e.what() << "\n"; }
@@ -132,6 +135,13 @@ int main(int argc, char** argv) {
                 std::strncpy(entityManager.GetComponent<Player>(dummy.id).nickname, "RedDummy", sizeof("RedDummy") - 1);
                 entityManager.GetComponent<Player>(dummy.id).nickname[sizeof("RedDummy") - 1] = '\0';
                 entityManager.AddComponent(dummy.id, Team(TeamColor::Red));
+
+                for (float i = 0.0f; i < 64.0f; i += 16.0f) for (float j = 0.0f; j < 64.0f; j += 16.0f) {
+                    Entity floor = entityManager.CreateEntity();
+                    entityManager.AddComponent(floor.id, Type(EntityType::FloorTile));
+                    entityManager.AddComponent(floor.id, Position(i, j));
+                }
+
                 initialized = true;
             }
 
@@ -153,7 +163,7 @@ int main(int argc, char** argv) {
                     if (input.isMouseUsed) {
                         // cout << "Mouse usado!\n";
                         // cout << "TargetX: " << input.targetX << " TargetY: " << input.targetY << "\n";
-                        if (entityManager.GetEntities().size() > 4) continue; // Temporário
+                        if (entityManager.GetEntities().size() > 20) continue; // Temporário
                         cout << "[Server] Player ID: " << input.playerID << " fired a projectile!\n";
                         Entity projectile = entityManager.CreateEntity();
                         cout << "[Server] Projectile ID: " << projectile.id << "\n";
@@ -183,10 +193,11 @@ int main(int argc, char** argv) {
                 }
             }
 
+            /*
             for (auto entity : entityManager.GetEntities<Position>()) {
                 auto position = entityManager.TryGetComponent<Position>(entity.id);
-                // cout << "Entity[" << entity.id << "]: x: " << position->x << " y: " << position->y << "\n";
-            }
+                cout << "Entity[" << entity.id << "]: x: " << position->x << " y: " << position->y << "\n";
+            }*/
             // cout << "EntityManagerSize: " << (int)entityManager.GetEntities().size() << "\n";
 
             std::this_thread::sleep_for(std::chrono::milliseconds(5));
