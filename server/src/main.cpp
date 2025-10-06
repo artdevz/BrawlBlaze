@@ -11,6 +11,7 @@
 #include "systems/Combat.hpp"
 #include "../../common/include/systems/Movement.hpp"
 
+#include "components/Timer.hpp"
 #include "components/Lifetime.hpp"
 
 using std::string, std::cout;
@@ -104,6 +105,7 @@ int main(int argc, char** argv) {
     std::thread simulateThread([&]() {
         using clock = std::chrono::high_resolution_clock;
         auto lastTime = clock::now();
+        auto startTime = clock::now();
 
         while (running) {
             auto now = clock::now();
@@ -115,6 +117,9 @@ int main(int argc, char** argv) {
             // ===== Generate ===== //
 
             if (!initialized) {
+                Entity match = entityManager.CreateEntity();
+                entityManager.AddComponent(match.id, Timer());
+
                 Entity ally = entityManager.CreateEntity();
                 entityManager.AddComponent(ally.id, Type(EntityType::Player));
                 entityManager.AddComponent(ally.id, Position(-160.0f, 0.0f));
@@ -222,7 +227,7 @@ int main(int argc, char** argv) {
 
             for (auto entity : entityManager.GetEntities<KDA>()) {
                 auto& kda = entityManager.GetComponent<KDA>(entity.id);
-                cout << "Entity[" << entity.id << "] K: " << kda.kills << " D: " << kda.deaths << " A: " << kda.assists << "\n";
+                // cout << "Entity[" << entity.id << "] K: " << kda.kills << " D: " << kda.deaths << " A: " << kda.assists << "\n";
             }
 
             /*
@@ -231,6 +236,13 @@ int main(int argc, char** argv) {
                 cout << "Entity[" << entity.id << "]: x: " << position->x << " y: " << position->y << "\n";
             }*/
             // cout << "EntityManagerSize: " << (int)entityManager.GetEntities().size() << "\n";
+
+            std::chrono::duration<float> totalElapsed = now - startTime;
+            for (auto entity : entityManager.GetEntities<Timer>()) {
+                auto& timer = entityManager.GetComponent<Timer>(entity.id);
+                timer.time = static_cast<uint64_t>(totalElapsed.count());
+                cout << "Time: " << (int)timer.GetMinutes() << ":" << (int)timer.GetSeconds() << "\n";
+            }
 
             std::this_thread::sleep_for(std::chrono::milliseconds(5));
         }
