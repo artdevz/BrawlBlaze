@@ -25,6 +25,9 @@ public:
     std::queue<CombatStatsPaylod> combatStatsQueue;
     std::mutex combatStatsMutex;
 
+    std::queue<MatchStatsPayload> matchStatsQueue;
+    std::mutex matchStatsMutex;
+
     void Start(Client* client);
     void Stop();
 

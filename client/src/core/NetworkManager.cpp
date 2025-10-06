@@ -45,6 +45,12 @@ void NetworkManager::NetworkThread(Client* client) {
                 std::lock_guard<std::mutex> lock(combatStatsMutex);
                 combatStatsQueue.push(payload);
                 break;
+            }
+            case ServerPacketType::MatchStats: {
+                auto payload = client->ParsePayload<MatchStatsPayload>(result);
+                std::lock_guard<std::mutex> lock(matchStatsMutex);
+                matchStatsQueue.push(payload);
+                break;
             }  
             default:
                 break;

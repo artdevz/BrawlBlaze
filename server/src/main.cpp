@@ -36,6 +36,7 @@ int main(int argc, char** argv) {
     std::mutex serverMutex;
 
     std::thread inputThread([&]() {
+        bool matchInitialized = false;
         while (running) {
             auto packet = server.Receive();
             if (packet.type == 0) {
@@ -83,6 +84,12 @@ int main(int argc, char** argv) {
                         std::strncpy(initPayload.nickname, payload.nickname, sizeof(initPayload.nickname) - 1);
                         initPayload.nickname[sizeof(initPayload.nickname) - 1] = '\0';
                         for (int i = 0; i < 1000; i++) server.Send(ServerPacketType::Init, initPayload, packet.addr);
+
+                        /*
+                        if (!matchInitialized) {
+                            Entity match = entityManager.CreateEntity();
+                            entityManager.AddComponent(match.id, Timer());
+                        }*/
                     }
 
                     case ClientPacketType::Input: {
@@ -117,9 +124,6 @@ int main(int argc, char** argv) {
             // ===== Generate ===== //
 
             if (!initialized) {
-                Entity match = entityManager.CreateEntity();
-                entityManager.AddComponent(match.id, Timer());
-
                 Entity ally = entityManager.CreateEntity();
                 entityManager.AddComponent(ally.id, Type(EntityType::Player));
                 entityManager.AddComponent(ally.id, Position(-160.0f, 0.0f));
@@ -164,7 +168,7 @@ int main(int argc, char** argv) {
 
                     auto* hp = entityManager.TryGetComponent<Health>(input.playerID);
                     if (!hp) continue;
-                    if (hp->current <= 0.0f) continue;
+                    if (hp->IsDead()) continue;
 
                     if (auto* velocity = entityManager.TryGetComponent<Velocity>(input.playerID)) {
                         float speed = 100.0f;
@@ -173,9 +177,7 @@ int main(int argc, char** argv) {
                     }
 
                     if (input.isMouseUsed) {
-                        // cout << "Mouse usado!\n";
-                        // cout << "TargetX: " << input.targetX << " TargetY: " << input.targetY << "\n";
-                        if (entityManager.GetEntities().size() > 20) continue; // Temporário
+                        if (entityManager.GetEntities().size() > 21) continue; // Temporário
                         cout << "[Server] Player ID: " << input.playerID << " fired a projectile!\n";
                         Entity projectile = entityManager.CreateEntity();
                         cout << "[Server] Projectile ID: " << projectile.id << "\n";
@@ -187,7 +189,6 @@ int main(int argc, char** argv) {
                             entityManager.AddComponent(projectile.id, Projectile(input.playerID));
                             entityManager.AddComponent(projectile.id, Team(entityManager.GetComponent<Team>(input.playerID).color));
                         }
-                        // cout << "[Server] Projectile spawned at (" << entityManager.GetComponent<Position>(projectile.id).x << ", " << entityManager.GetComponent<Position>(projectile.id).y << ")\n";
                     }
                 }
             }
@@ -196,18 +197,13 @@ int main(int argc, char** argv) {
 
             for (auto entity : entityManager.GetEntities<Dead>()) {
                 auto& dead = entityManager.GetComponent<Dead>(entity.id);
-                dead.respawnTime--;
-                if (dead.respawnTime <= 0) {
+                if (dead.ReduceRespawnTime(1)) {
                     if (auto* player = entityManager.TryGetComponent<Player>(entity.id)) {
                         if (auto* position = entityManager.TryGetComponent<Position>(entity.id)) {
                             position->x = (entityManager.GetComponent<Team>(entity.id).color == TeamColor::Blue ? -128.0f : 128.0f);
                             position->y = 0.0f;
                         }
-                        if (auto* health = entityManager.TryGetComponent<Health>(entity.id)) {
-                            health->current = health->max;
-                        }
-                        // entityManager.GetComponent<Dead>(entity.id).respawnTime = 3000;
-                        // entityManager.TryGetComponent<Dead>(entity.id);
+                        if (auto* health = entityManager.TryGetComponent<Health>(entity.id)) health->MaxHeal();
                         entityManager.RemoveComponent<Dead>(entity.id);
                         cout << "[Server] Player " << player->nickname << " has respawned!\n";
                     }
@@ -217,12 +213,7 @@ int main(int argc, char** argv) {
             for (auto entity : entityManager.GetEntities<Lifetime>()) {
                 if (entityManager.TryGetComponent<RemoveTag>(entity.id)) continue;
                 auto& lifetime = entityManager.GetComponent<Lifetime>(entity.id);
-                lifetime.lifespan -= 1.0f;
-                //cout << "Entity[" << entity.id << "] Lifetime: " << lifetime.lifespan << "\n";
-                if (lifetime.lifespan <= 0.0f) {
-                    // cout << "[Server] Entity ID: " << entity.id << " expired.\n";
-                    entityManager.AddComponent(entity.id, RemoveTag());
-                }
+                if (lifetime.ReduceLifespan(1.0f)) entityManager.AddComponent(entity.id, RemoveTag());
             }
 
             for (auto entity : entityManager.GetEntities<KDA>()) {
@@ -235,13 +226,12 @@ int main(int argc, char** argv) {
                 auto position = entityManager.TryGetComponent<Position>(entity.id);
                 cout << "Entity[" << entity.id << "]: x: " << position->x << " y: " << position->y << "\n";
             }*/
-            // cout << "EntityManagerSize: " << (int)entityManager.GetEntities().size() << "\n";
 
             std::chrono::duration<float> totalElapsed = now - startTime;
             for (auto entity : entityManager.GetEntities<Timer>()) {
                 auto& timer = entityManager.GetComponent<Timer>(entity.id);
                 timer.time = static_cast<uint64_t>(totalElapsed.count());
-                cout << "Time: " << (int)timer.GetMinutes() << ":" << (int)timer.GetSeconds() << "\n";
+                // cout << "Time: " << (int)timer.GetMinutes() << ":" << (int)timer.GetSeconds() << "\n";
             }
 
             std::this_thread::sleep_for(std::chrono::milliseconds(5));
@@ -254,6 +244,7 @@ int main(int argc, char** argv) {
             std::vector<AddEntityPayload> addSnapshot;
             std::vector<RemoveEntityPayload> removeSnapshot;
             std::vector<CombatStatsPaylod> combatStatsSnapshot;
+            std::vector<MatchStatsPayload> matchStatsSnapshot;
 
             // ===== Generate ===== //
 
@@ -318,6 +309,15 @@ int main(int argc, char** argv) {
                     payload.assists = kda.assists;
                     combatStatsSnapshot.push_back(payload);
                 }
+
+                // ===== Match Stats ===== //
+
+                // for (auto& entity : entityManager.GetEntities<Timer>()) {
+                //     MatchStatsPayload payload{};
+                //     auto& timer = entityManager.GetComponent<Timer>(entity.id);
+                //     payload.time = timer.time;
+                //     matchStatsSnapshot.push_back(payload);
+                // }
             }
 
             // ===== Send ===== //
@@ -340,6 +340,11 @@ int main(int argc, char** argv) {
             if (!combatStatsSnapshot.empty()) {
                 std::lock_guard<std::mutex> lock(serverMutex);
                 server.Broadcast<CombatStatsPaylod>(ServerPacketType::CombatStats, combatStatsSnapshot);
+            }
+
+            if (!matchStatsSnapshot.empty()) {
+                std::lock_guard<std::mutex> lock(serverMutex);
+                server.Broadcast<MatchStatsPayload>(ServerPacketType::MatchStats, matchStatsSnapshot);
             }
 
             std::this_thread::sleep_for(std::chrono::milliseconds(50));

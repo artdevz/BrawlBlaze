@@ -36,4 +36,6 @@ private:
 
     std::unique_ptr<Client> client;
 
+    uint64_t matchTime;
+
 };

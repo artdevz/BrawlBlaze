@@ -166,6 +166,11 @@ void Game::Update() {
         }
     }
 
+    MatchStatsPayload matchStatsPayload{};
+    while (networkManager.PoolPacket(networkManager.matchStatsQueue, networkManager.matchStatsMutex, matchStatsPayload)) {
+        matchTime = matchStatsPayload.time;
+    }
+
     // ===== Camera ===== //
     
     if (auto* position = entityManager.TryGetComponent<Position>(localPlayerID)) CameraManager::Get().Update({position->x, position->y});
@@ -179,7 +184,7 @@ void Game::Draw() {
     render.RenderLifebar(entityManager, localPlayerID);
     EndMode2D();
     if (auto* hp = entityManager.TryGetComponent<Health>(localPlayerID)) {
-        if (hp->current <= 0.0f) {
+        if (hp->IsDead()) {
             DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), Fade(GRAY, 0.5f));
             DrawText("You are dead!", GetScreenWidth()/2 - MeasureText("You are dead!", 40)/2, GetScreenHeight()/2 - 20, 40, RED);
         }
@@ -193,6 +198,7 @@ void Game::Draw() {
         std::string kdaText = "KDA: " + std::to_string(kda->kills) + " / " + std::to_string(kda->deaths) + " / " + std::to_string(kda->assists);
         DrawText(kdaText.c_str(), 10, 70, 20, WHITE);
     }
+    DrawText(std::to_string(matchTime).c_str(), 10, 90, 20, WHITE);
 
     DrawFPS(10, 10);
 }

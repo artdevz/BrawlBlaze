@@ -13,7 +13,8 @@ enum class ServerPacketType : uint8_t {
     EntityState = 2,
     Add = 3,
     Remove = 4,
-    CombatStats = 5
+    CombatStats = 5,
+    MatchStats = 6
 };
 
 #pragma pack(push, 1)
@@ -84,6 +85,10 @@ struct CombatStatsPaylod {
     uint16_t kills;
     uint16_t deaths;
     uint16_t assists;
+};
+
+struct MatchStatsPayload {
+    uint64_t time;
 };
 
 #pragma pack(pop)

@@ -11,6 +11,8 @@ void Combat::HandleProjectiles(EntityManager& entityManager) {
 
         for (auto& other : entityManager.GetEntities<Team>()) {
             if (other.id == entity.id) continue;
+
+            if (entityManager.TryGetComponent<Dead>(other.id)) continue;
             
             auto* otherTeam = entityManager.TryGetComponent<Team>(other.id);
             if (!otherTeam) continue;
@@ -21,26 +23,25 @@ void Combat::HandleProjectiles(EntityManager& entityManager) {
 
             if (!originPosition || !otherPosition || !otherCollider) continue;
 
-            if (otherCollider->Intersects(*originPosition, *otherCollider, *otherPosition)) {
-                if (originTeam->color == otherTeam->color) continue;
+            if (!otherCollider->Intersects(*originPosition, *otherCollider, *otherPosition)) continue;
+            if (originTeam->color == otherTeam->color) continue;
 
-                entityManager.AddComponent(entity.id, RemoveTag());
-                auto* health = entityManager.TryGetComponent<Health>(other.id);
-                if (!health) continue;
+            entityManager.AddComponent(entity.id, RemoveTag());
+            auto* health = entityManager.TryGetComponent<Health>(other.id);
+            if (!health) continue;
 
-                health->current -= 10.0f;
-                if (health->current <= 0.0f) {
-                    std::cout << "[Server] Entity ID: " << other.id << " died.\n";
-                    if (auto* player = entityManager.TryGetComponent<Player>(other.id)) {
-                        std::cout << "[Server] Player " << player->nickname << " has been killed!\n";
-                        if (auto* kda = entityManager.TryGetComponent<KDA>(other.id)) kda->deaths++;
-                        if (auto* projectile = entityManager.TryGetComponent<Projectile>(entity.id)) { if (auto* originKDA = entityManager.TryGetComponent<KDA>(projectile->originID)) originKDA->kills++; }
-                        entityManager.AddComponent(other.id, Dead());
-                        continue;
-                    }
-                    entityManager.AddComponent(other.id, RemoveTag()); 
+            if (health->TakeDamage(10.0f)) {
+                std::cout << "[Server] Entity ID: " << other.id << " died.\n";
+                if (auto* player = entityManager.TryGetComponent<Player>(other.id)) {
+                    std::cout << "[Server] Player " << player->nickname << " has been killed!\n";
+                    if (auto* kda = entityManager.TryGetComponent<KDA>(other.id)) kda->AddDeath();
+                    if (auto* projectile = entityManager.TryGetComponent<Projectile>(entity.id)) { if (auto* originKDA = entityManager.TryGetComponent<KDA>(projectile->originID)) originKDA->AddKill(); }
+                    entityManager.AddComponent(other.id, Dead());
+                    continue;
                 }
+                entityManager.AddComponent(other.id, RemoveTag()); 
             }
+            
         }
     }
 };
