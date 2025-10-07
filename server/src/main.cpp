@@ -11,6 +11,7 @@
 #include "systems/Combat.hpp"
 #include "../../common/include/systems/Movement.hpp"
 
+#include "components/Cooldown.hpp"
 #include "components/Timer.hpp"
 #include "components/Lifetime.hpp"
 
@@ -35,79 +36,6 @@ int main(int argc, char** argv) {
     std::mutex entityMutex;
     std::mutex serverMutex;
 
-    std::thread inputThread([&]() {
-        bool matchInitialized = false;
-        while (running) {
-            auto packet = server.Receive();
-            if (packet.type == 0) {
-                std::this_thread::sleep_for(std::chrono::milliseconds(1));
-                continue;
-            }
-
-            try {
-                switch (static_cast<ClientPacketType>(packet.type)) {
-                    case ClientPacketType::Connect: {
-                        auto payload = server.ParsePayload<ConnectPayload>(packet);
-                        Entity newPlayer;
-                        {
-                            newPlayer = entityManager.CreateEntity();
-                            entityManager.AddComponent(newPlayer.id, Type(EntityType::Player));
-                            entityManager.AddComponent(newPlayer.id, Position(0.0f, 0.0f));
-                            entityManager.AddComponent(newPlayer.id, Velocity(100.0f, 100.0f));
-                            entityManager.AddComponent(newPlayer.id, Collider(16.0f, 16.0f));
-                            entityManager.AddComponent(newPlayer.id, Health(100.0f, 100.0f));
-                            entityManager.AddComponent(newPlayer.id, Player());
-                            entityManager.AddComponent(newPlayer.id, KDA());
-                            std::strncpy(entityManager.GetComponent<Player>(newPlayer.id).nickname, payload.nickname, sizeof(payload.nickname) - 1);
-                            entityManager.GetComponent<Player>(newPlayer.id).nickname[sizeof(payload.nickname) - 1] = '\0';
-                            // Alterna entre times
-                            entityManager.AddComponent(newPlayer.id, Team( (playersConnected % 2? TeamColor::Red : TeamColor::Blue) ));
-                        }
-
-                        {
-                            server.RegisterClient(newPlayer.id, packet.addr);
-                        }
-                        cout << "[Server] " << payload.nickname << " joined the game\n";
-                        cout << "[Server] " << (int)++playersConnected << "/255 players connected\n";
-
-                        InitPayload initPayload{};
-                        initPayload.entityID = newPlayer.id;
-                        if (auto* position = entityManager.TryGetComponent<Position>(newPlayer.id)) {
-                            initPayload.x = position->x;
-                            initPayload.y = position->y;
-                        }
-                        if (auto* health = entityManager.TryGetComponent<Health>(newPlayer.id)) {
-                            initPayload.hp = health->current;
-                            initPayload.maxHP = health->max;
-                        }
-                        initPayload.team = (uint8_t)entityManager.GetComponent<Team>(newPlayer.id).color;
-                        std::strncpy(initPayload.nickname, payload.nickname, sizeof(initPayload.nickname) - 1);
-                        initPayload.nickname[sizeof(initPayload.nickname) - 1] = '\0';
-                        for (int i = 0; i < 1000; i++) server.Send(ServerPacketType::Init, initPayload, packet.addr);
-
-                        /*
-                        if (!matchInitialized) {
-                            Entity match = entityManager.CreateEntity();
-                            entityManager.AddComponent(match.id, Timer());
-                        }*/
-                    }
-
-                    case ClientPacketType::Input: {
-                        auto payload = server.ParsePayload<InputPayload>(packet);
-                        std::lock_guard<std::mutex> lock(inputMutex);
-                        inputQueue.push(payload);
-                        break;
-                    }
-                    case ClientPacketType::Message: {
-                        break;
-                    }
-                }
-            }
-            catch (const std::exception& e) { std::cerr << "[Server] Failed to parse packet: " << e.what() << "\n"; }
-
-            std::this_thread::sleep_for(std::chrono::milliseconds(1));
-        }
-    });
     bool initialized = false; // Temporário
     std::thread simulateThread([&]() {
         using clock = std::chrono::high_resolution_clock;
@@ -162,6 +90,7 @@ int main(int argc, char** argv) {
             {
                 std::lock_guard<std::mutex> lockInput(inputMutex);
                 std::lock_guard<std::mutex> lockEntity(entityMutex);
+
                 while (!inputQueue.empty()) {
                     auto input = inputQueue.front();
                     inputQueue.pop();
@@ -177,27 +106,44 @@ int main(int argc, char** argv) {
                     }
 
                     if (input.isMouseUsed) {
-                        if (entityManager.GetEntities().size() > 21) continue; // Temporário
-                        cout << "[Server] Player ID: " << input.playerID << " fired a projectile!\n";
-                        Entity projectile = entityManager.CreateEntity();
-                        cout << "[Server] Projectile ID: " << projectile.id << "\n";
-                        entityManager.AddComponent(projectile.id, Type(EntityType::Projectile));
-                        if (auto* origin = entityManager.TryGetComponent<Position>(input.playerID)) {
-                            entityManager.AddComponent(projectile.id, Position(origin->x, origin->y));
-                            entityManager.AddComponent(projectile.id, Velocity(600.0f, (input.targetX - origin->x), (input.targetY - origin->y)));
-                            entityManager.AddComponent(projectile.id, Lifetime(100.0f));
-                            entityManager.AddComponent(projectile.id, Projectile(input.playerID));
-                            entityManager.AddComponent(projectile.id, Team(entityManager.GetComponent<Team>(input.playerID).color));
+                        if (auto* cooldown = entityManager.TryGetComponent<Cooldown>(input.playerID)) {
+                            if (!cooldown->IsReady()) continue;     
+
+                            cout << "[Server] Player ID: " << input.playerID << " fired a projectile!\n";
+                            Entity projectile = entityManager.CreateEntity();
+                            cout << "[Server] Projectile ID: " << projectile.id << "\n";
+                            entityManager.AddComponent(projectile.id, Type(EntityType::Projectile));
+                            if (auto* origin = entityManager.TryGetComponent<Position>(input.playerID)) {
+                                entityManager.AddComponent(projectile.id, Position(origin->x, origin->y));
+                                entityManager.AddComponent(projectile.id, Velocity(600.0f, (input.targetX - origin->x), (input.targetY - origin->y)));
+                                entityManager.AddComponent(projectile.id, Lifetime(100.0f));
+                                entityManager.AddComponent(projectile.id, Projectile(input.playerID));
+                                entityManager.AddComponent(projectile.id, Team(entityManager.GetComponent<Team>(input.playerID).color));
+                            }
+                            cooldown->Reset();
                         }
                     }
                 }
             }
+
             movement.Move(entityManager, deltaTime);
             combat.HandleProjectiles(entityManager);
 
+            // ===== Update States ===== //
+
+            {
+                std::lock_guard<std::mutex> lock(entityMutex);
+                for (auto entity : entityManager.GetEntities<Cooldown>()) {
+                    auto& cooldown = entityManager.GetComponent<Cooldown>(entity.id);
+                    cout << "[Server] Entity ID: " << entity.id << " Cooldown: " << cooldown.remain << "ms\n";
+                    cooldown.ReduceCooldown(deltaTime * 1000);
+                }
+            }
+
             for (auto entity : entityManager.GetEntities<Dead>()) {
+                cout << "[Server] Entity ID: " << entity.id << " is dead. Respawning in: " << entityManager.GetComponent<Dead>(entity.id).respawnTime << "ms\n";
                 auto& dead = entityManager.GetComponent<Dead>(entity.id);
-                if (dead.ReduceRespawnTime(1)) {
+                if (dead.ReduceRespawnTime(deltaTime * 1000)) {
                     if (auto* player = entityManager.TryGetComponent<Player>(entity.id)) {
                         if (auto* position = entityManager.TryGetComponent<Position>(entity.id)) {
                             position->x = (entityManager.GetComponent<Team>(entity.id).color == TeamColor::Blue ? -128.0f : 128.0f);
@@ -216,17 +162,6 @@ int main(int argc, char** argv) {
                 if (lifetime.ReduceLifespan(1.0f)) entityManager.AddComponent(entity.id, RemoveTag());
             }
 
-            for (auto entity : entityManager.GetEntities<KDA>()) {
-                auto& kda = entityManager.GetComponent<KDA>(entity.id);
-                // cout << "Entity[" << entity.id << "] K: " << kda.kills << " D: " << kda.deaths << " A: " << kda.assists << "\n";
-            }
-
-            /*
-            for (auto entity : entityManager.GetEntities<Position>()) {
-                auto position = entityManager.TryGetComponent<Position>(entity.id);
-                cout << "Entity[" << entity.id << "]: x: " << position->x << " y: " << position->y << "\n";
-            }*/
-
             std::chrono::duration<float> totalElapsed = now - startTime;
             for (auto entity : entityManager.GetEntities<Timer>()) {
                 auto& timer = entityManager.GetComponent<Timer>(entity.id);
@@ -234,7 +169,90 @@ int main(int argc, char** argv) {
                 // cout << "Time: " << (int)timer.GetMinutes() << ":" << (int)timer.GetSeconds() << "\n";
             }
 
+            // ===== Debug ===== //
+
+            /*
+            for (auto entity : entityManager.GetEntities<KDA>()) {
+                auto& kda = entityManager.GetComponent<KDA>(entity.id);
+                cout << "Entity[" << entity.id << "] K: " << kda.kills << " D: " << kda.deaths << " A: " << kda.assists << "\n";
+            }*/
+
             std::this_thread::sleep_for(std::chrono::milliseconds(5));
+        }
+    });
+
+    std::thread inputThread([&]() {
+        bool matchInitialized = false;
+        while (running) {
+            auto packet = server.Receive();
+            if (packet.type == 0) {
+                std::this_thread::sleep_for(std::chrono::milliseconds(1));
+                continue;
+            }
+
+            try {
+                switch (static_cast<ClientPacketType>(packet.type)) {
+                    case ClientPacketType::Connect: {
+                        auto payload = server.ParsePayload<ConnectPayload>(packet);
+                        Entity newPlayer;
+                        {
+                            newPlayer = entityManager.CreateEntity();
+                            entityManager.AddComponent(newPlayer.id, Type(EntityType::Player));
+                            entityManager.AddComponent(newPlayer.id, Position(0.0f, 0.0f));
+                            entityManager.AddComponent(newPlayer.id, Velocity(100.0f, 100.0f));
+                            entityManager.AddComponent(newPlayer.id, Collider(16.0f, 16.0f));
+                            entityManager.AddComponent(newPlayer.id, Health(100.0f, 100.0f));
+                            entityManager.AddComponent(newPlayer.id, Player());
+                            entityManager.AddComponent(newPlayer.id, KDA());
+                            entityManager.AddComponent(newPlayer.id, Cooldown(333.0f));
+                            std::strncpy(entityManager.GetComponent<Player>(newPlayer.id).nickname, payload.nickname, sizeof(payload.nickname) - 1);
+                            entityManager.GetComponent<Player>(newPlayer.id).nickname[sizeof(payload.nickname) - 1] = '\0';
+                            // Alterna entre times
+                            entityManager.AddComponent(newPlayer.id, Team( (playersConnected % 2? TeamColor::Red : TeamColor::Blue) ));
+                        }
+
+                        {
+                            server.RegisterClient(newPlayer.id, packet.addr);
+                        }
+                        cout << "[Server] " << payload.nickname << " joined the game\n";
+                        cout << "[Server] " << (int)++playersConnected << "/255 players connected\n";
+
+                        InitPayload initPayload{};
+                        initPayload.entityID = newPlayer.id;
+                        if (auto* position = entityManager.TryGetComponent<Position>(newPlayer.id)) {
+                            initPayload.x = position->x;
+                            initPayload.y = position->y;
+                        }
+                        if (auto* health = entityManager.TryGetComponent<Health>(newPlayer.id)) {
+                            initPayload.hp = health->current;
+                            initPayload.maxHP = health->max;
+                        }
+                        initPayload.team = (uint8_t)entityManager.GetComponent<Team>(newPlayer.id).color;
+                        std::strncpy(initPayload.nickname, payload.nickname, sizeof(initPayload.nickname) - 1);
+                        initPayload.nickname[sizeof(initPayload.nickname) - 1] = '\0';
+                        for (int i = 0; i < 1000; i++) server.Send(ServerPacketType::Init, initPayload, packet.addr);
+
+                        /*
+                        if (!matchInitialized) {
+                            Entity match = entityManager.CreateEntity();
+                            entityManager.AddComponent(match.id, Timer());
+                        }*/
+                    }
+
+                    case ClientPacketType::Input: {
+                        auto payload = server.ParsePayload<InputPayload>(packet);
+                        std::lock_guard<std::mutex> lock(inputMutex);
+                        inputQueue.push(payload);
+                        break;
+                    }
+                    case ClientPacketType::Message: {
+                        break;
+                    }
+                }
+            }
+            catch (const std::exception& e) { std::cerr << "[Server] Failed to parse packet: " << e.what() << "\n"; }
+
+            std::this_thread::sleep_for(std::chrono::milliseconds(1));
         }
     });
 

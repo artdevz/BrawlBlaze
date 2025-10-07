@@ -16,11 +16,11 @@ struct Health {
     }
 
     bool TakeDamage(float amount) {
-        if (current < 0.0f) {
+        current -= amount;
+        if (current <= 0.0f) {
             current = 0.0f;
             return true;
         }
-        current -= amount;
         return false;
     }
 };

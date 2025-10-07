@@ -3,13 +3,16 @@
 #include <cstdint>
 
 struct Dead {
-    uint16_t respawnTime;
+    float respawnTime;
 
-    Dead(uint16_t respawnTime = 3000) : respawnTime(respawnTime) {}
+    Dead(float respawnTime = 5000.0f) : respawnTime(respawnTime) {}
 
-    bool ReduceRespawnTime(uint16_t amount) {
-        if (respawnTime <= amount) return true;
+    bool ReduceRespawnTime(float amount) {
         respawnTime -= amount;
+        if (respawnTime <= amount) {
+            respawnTime = 0.0f;
+            return true;
+        }
         return false;
     }
 };
