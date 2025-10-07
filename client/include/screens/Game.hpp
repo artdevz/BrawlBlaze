@@ -6,7 +6,7 @@
 
 #include "core/NetworkManager.hpp"
 
-#include "network/Client.hpp"
+#include "core/NetworkClient.hpp"
 
 #include "systems/Render.hpp"
 

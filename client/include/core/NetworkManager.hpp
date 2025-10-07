@@ -5,7 +5,7 @@
 #include <queue>
 #include <thread>
 
-#include "network/Client.hpp"
+#include "core/NetworkClient.hpp"
 
 class NetworkManager {
 

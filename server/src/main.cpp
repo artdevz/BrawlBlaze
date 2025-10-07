@@ -4,7 +4,7 @@
 #include <thread>
 #include <unordered_map>
 
-#include "network/Server.hpp"
+#include "core/NetworkServer.hpp"
 
 #include "../../common/include/EntityManager.hpp"
 

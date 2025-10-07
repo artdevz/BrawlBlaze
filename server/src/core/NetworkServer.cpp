@@ -1,4 +1,4 @@
-#include "network/Server.hpp"
+#include "core/NetworkServer.hpp"
 
 #include <iostream>
 #include <cstring>
