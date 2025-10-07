@@ -18,6 +18,7 @@
 #include "components/Team.hpp"
 #include "components/Type.hpp"
 #include "components/Velocity.hpp"
+#include "components/Wallet.hpp"
 #include "components/RemoveTag.hpp"
 
 struct Entity {

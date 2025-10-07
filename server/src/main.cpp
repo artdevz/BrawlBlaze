@@ -60,6 +60,7 @@ int main(int argc, char** argv) {
                 entityManager.AddComponent(ally.id, Health(100.0f, 100.0f));
                 entityManager.AddComponent(ally.id, Player());
                 entityManager.AddComponent(ally.id, KDA());
+                entityManager.AddComponent(ally.id, Wallet());
                 std::strncpy(entityManager.GetComponent<Player>(ally.id).nickname, "BlueDummy", sizeof("BlueDummy") - 1);
                 entityManager.GetComponent<Player>(ally.id).nickname[sizeof("BlueDummy") - 1] = '\0';
                 entityManager.AddComponent(ally.id, Team(TeamColor::Blue));
@@ -72,6 +73,7 @@ int main(int argc, char** argv) {
                 entityManager.AddComponent(dummy.id, Health(100.0f, 100.0f));
                 entityManager.AddComponent(dummy.id, Player());
                 entityManager.AddComponent(dummy.id, KDA());
+                entityManager.AddComponent(dummy.id, Wallet());
                 std::strncpy(entityManager.GetComponent<Player>(dummy.id).nickname, "RedDummy", sizeof("RedDummy") - 1);
                 entityManager.GetComponent<Player>(dummy.id).nickname[sizeof("RedDummy") - 1] = '\0';
                 entityManager.AddComponent(dummy.id, Team(TeamColor::Red));
@@ -177,6 +179,11 @@ int main(int argc, char** argv) {
                 cout << "Entity[" << entity.id << "] K: " << kda.kills << " D: " << kda.deaths << " A: " << kda.assists << "\n";
             }*/
 
+            for (auto entity : entityManager.GetEntities<Wallet>()) {
+                auto& wallet = entityManager.GetComponent<Wallet>(entity.id);
+                cout << "[DEBUG] Entity[" << entity.id << "] Silver: " << wallet.silver << " Gold: " << wallet.gold << "\n";
+            }
+
             std::this_thread::sleep_for(std::chrono::milliseconds(5));
         }
     });
@@ -204,6 +211,7 @@ int main(int argc, char** argv) {
                             entityManager.AddComponent(newPlayer.id, Health(100.0f, 100.0f));
                             entityManager.AddComponent(newPlayer.id, Player());
                             entityManager.AddComponent(newPlayer.id, KDA());
+                            entityManager.AddComponent(newPlayer.id, Wallet());
                             entityManager.AddComponent(newPlayer.id, Cooldown(333.0f));
                             std::strncpy(entityManager.GetComponent<Player>(newPlayer.id).nickname, payload.nickname, sizeof(payload.nickname) - 1);
                             entityManager.GetComponent<Player>(newPlayer.id).nickname[sizeof(payload.nickname) - 1] = '\0';
