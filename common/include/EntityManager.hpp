@@ -16,6 +16,7 @@
 #include "components/Projectile.hpp"
 #include "components/Tag.hpp"
 #include "components/Team.hpp"
+#include "components/Timer.hpp"
 #include "components/Type.hpp"
 #include "components/Velocity.hpp"
 #include "components/Wallet.hpp"

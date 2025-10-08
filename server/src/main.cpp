@@ -12,7 +12,6 @@
 #include "../../common/include/systems/Movement.hpp"
 
 #include "components/Cooldown.hpp"
-#include "components/Timer.hpp"
 #include "components/Lifetime.hpp"
 
 using std::string, std::cout;
@@ -176,6 +175,7 @@ int main(int argc, char** argv) {
             std::chrono::duration<float> totalElapsed = now - startTime;
             for (auto entity : entityManager.GetEntities<Timer>()) {
                 auto& timer = entityManager.GetComponent<Timer>(entity.id);
+                if (timer.time != static_cast<uint64_t>(totalElapsed.count())) timer.changed = true;
                 timer.time = static_cast<uint64_t>(totalElapsed.count());
                 // cout << "Time: " << (int)timer.GetMinutes() << ":" << (int)timer.GetSeconds() << "\n";
             }
@@ -225,7 +225,6 @@ int main(int argc, char** argv) {
                             entityManager.AddComponent(newPlayer.id, Cooldown(333.0f));
                             std::strncpy(entityManager.GetComponent<Player>(newPlayer.id).nickname, payload.nickname, sizeof(payload.nickname) - 1);
                             entityManager.GetComponent<Player>(newPlayer.id).nickname[sizeof(payload.nickname) - 1] = '\0';
-                            // Alterna entre times
                             entityManager.AddComponent(newPlayer.id, Team( (playersConnected % 2? TeamColor::Red : TeamColor::Blue) ));
                         }
 
@@ -350,12 +349,15 @@ int main(int argc, char** argv) {
 
                 // ===== Match Stats ===== //
 
-                // for (auto& entity : entityManager.GetEntities<Timer>()) {
-                //     MatchStatsPayload payload{};
-                //     auto& timer = entityManager.GetComponent<Timer>(entity.id);
-                //     payload.time = timer.time;
-                //     matchStatsSnapshot.push_back(payload);
-                // }
+                for (auto& entity : entityManager.GetEntities<Timer>()) {
+                    MatchStatsPayload payload{};
+                    auto& timer = entityManager.GetComponent<Timer>(entity.id);
+                    if (timer.changed) {
+                        payload.time = timer.time;
+                        timer.changed = false;
+                        matchStatsSnapshot.push_back(payload); // Talvez seja melhor enviar só um, e o Cliente que calcula o tempo de jogo a partir disso
+                    }
+                }
 
                 // ===== Entity Team Change ===== //
                 for (auto& entity : entityManager.GetEntities<Team>()) {
@@ -393,6 +395,7 @@ int main(int argc, char** argv) {
 
             if (!matchStatsSnapshot.empty()) {
                 std::lock_guard<std::mutex> lock(serverMutex);
+                cout << "[Server] Broadcasting match stats...\n";
                 server.Broadcast<MatchStatsPayload>(ServerPacketType::MatchStats, matchStatsSnapshot);
             }
 
