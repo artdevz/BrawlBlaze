@@ -15,26 +15,25 @@ void Render::RenderTile(EntityManager& entityManager) {
 }
 
 void Render::RenderActor(EntityManager& entityManager, uint32_t localID) {
-    for (auto& entity : entityManager.GetEntities<Position, Sprite>()) {
+    for (auto& entity : entityManager.GetEntities<Position, Sprite, Type>()) {
         if (entityManager.TryGetComponent<TileTag>(entity.id)) continue;
 
         auto& position = entityManager.GetComponent<Position>(entity.id);
         auto& sprite = entityManager.GetComponent<Sprite>(entity.id);
+        auto& type = entityManager.GetComponent<Type>(entity.id);
 
-        if (entityManager.TryGetComponent<Projectile>(entity.id)) {
+        if (type.type == EntityType::Projectile || type.type == EntityType::Tower) {
             auto* localTeam = entityManager.TryGetComponent<Team>(localID);
-            auto* projectileTeam = entityManager.TryGetComponent<Team>(entity.id);
-            if (!localTeam || !projectileTeam) continue;
+            auto* entityTeam = entityManager.TryGetComponent<Team>(entity.id);
+            if (!localTeam || !entityTeam) continue;
 
-            Color projectileColor = RED;
-            if (localTeam->color == projectileTeam->color) projectileColor = BLUE;
-            DrawTexture(AssetManager::Get().GetTexture(sprite.id), position.x-8, position.y-8, projectileColor);
+            Color entityColor = WHITE;
+            if (entityTeam->color != TeamColor::None) entityColor = (localTeam->color == entityTeam->color)? BLUE : RED;
+            DrawTexture(AssetManager::Get().GetTexture(sprite.id), position.x-8, position.y-8, entityColor);
             continue;
         }
 
-        if (auto* hp = entityManager.TryGetComponent<Health>(entity.id)) {
-            if (hp->current <= 0.0f) continue;
-        }
+        if (auto* hp = entityManager.TryGetComponent<Health>(entity.id)) if (hp->IsDead()) continue;
 
         DrawTexture(AssetManager::Get().GetTexture(sprite.id), position.x-8, position.y-8, WHITE);
     }

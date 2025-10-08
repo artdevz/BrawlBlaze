@@ -29,6 +29,7 @@ void AssetManager::LoadTextures() {
     LoadTexture("human", "assets/sprites/Human.png");
     LoadTexture("bullet", "assets/sprites/Bullet.png");
     LoadTexture("floor", "assets/sprites/FloorTile.png");
+    LoadTexture("tower", "assets/sprites/Tower.png");
 }
 
 void AssetManager::UnloadTextures() {

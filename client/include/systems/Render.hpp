@@ -3,7 +3,6 @@
 #include <raylib.h>
 
 #include "../../../common/include/EntityManager.hpp"
-#include "../../../common/include/components/Position.hpp"
 
 class Render {
 

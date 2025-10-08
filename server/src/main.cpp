@@ -78,6 +78,13 @@ int main(int argc, char** argv) {
                 entityManager.GetComponent<Player>(dummy.id).nickname[sizeof("RedDummy") - 1] = '\0';
                 entityManager.AddComponent(dummy.id, Team(TeamColor::Red));
 
+                Entity tower = entityManager.CreateEntity();
+                entityManager.AddComponent(tower.id, Type(EntityType::Tower));
+                entityManager.AddComponent(tower.id, Position(128.0f, 128.0f));
+                entityManager.AddComponent(tower.id, Collider(16.0f, 16.0f));
+                entityManager.AddComponent(tower.id, Health(500.0f, 500.0f));
+                entityManager.AddComponent(tower.id, Team(TeamColor::None));
+
                 for (float i = 0.0f; i < 64.0f; i += 16.0f) for (float j = 0.0f; j < 64.0f; j += 16.0f) {
                     Entity floor = entityManager.CreateEntity();
                     entityManager.AddComponent(floor.id, Type(EntityType::FloorTile));

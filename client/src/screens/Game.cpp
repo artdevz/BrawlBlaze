@@ -99,11 +99,13 @@ void Game::Update() {
         if (addPayload.entityID == localPlayerID) continue;
         if (spawnedEntities.count(addPayload.entityID)) continue;
         spawnedEntities.insert(addPayload.entityID);
+
         Entity entity = entityManager.CreateEntity();
         entity.id = addPayload.entityID;
         entityManager.AddComponent(entity.id, Type((EntityType)addPayload.type));
         std::cout << "Spawning Entity ID: " << entity.id << " Type: " << (int)addPayload.type << "\n";
         entityManager.AddComponent(entity.id, Position(addPayload.x, addPayload.y));
+
         if (addPayload.type == (uint16_t)EntityType::Player) {
             entityManager.AddComponent(entity.id, Collider(16.0f, 16.0f));
             entityManager.AddComponent(entity.id, Player());
@@ -114,20 +116,29 @@ void Game::Update() {
             }
             entityManager.AddComponent(entity.id, Sprite("human"));
         }
+
         if (addPayload.type == (uint16_t)EntityType::FloorTile) {
             entityManager.AddComponent(entity.id, Type(EntityType::FloorTile));
             entityManager.AddComponent(entity.id, TileTag());
             entityManager.AddComponent(entity.id, Position(addPayload.x, addPayload.y));
             entityManager.AddComponent(entity.id, Sprite("floor"));
         }
+
         if (addPayload.type == (uint16_t)EntityType::Projectile) {
-            // entityManager.AddComponent(entity.id, Velocity());
-            // entityManager.AddComponent(entity.id, Collider(4.0f, 4.0f));
+            entityManager.AddComponent(entity.id, Type(EntityType::Projectile));
             entityManager.AddComponent(entity.id, Sprite("bullet"));
             entityManager.AddComponent(entity.id, Projectile(localPlayerID));
         }
+
+        if (addPayload.type == (uint16_t)EntityType::Tower) {
+            entityManager.AddComponent(entity.id, Type(EntityType::Tower));
+            entityManager.AddComponent(entity.id, Collider(16.0f, 16.0f));
+            entityManager.AddComponent(entity.id, Sprite("tower"));
+        }
+
         entityManager.AddComponent(entity.id, Health(addPayload.hp, addPayload.maxHP));
         if (addPayload.team > 0) {
+            std::cout << "Entity ID: " << entity.id << " Team: " << (int)addPayload.team << "\n";
             entityManager.AddComponent(entity.id, Team((TeamColor)addPayload.team));
         }
     }

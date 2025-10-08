@@ -3,9 +3,9 @@
 #include <cstdint>
 
 enum class TeamColor : uint8_t {
-    None,
-    Blue,
-    Red
+    Blue = 1,
+    Red,
+    None
 };
 
 struct Team {
