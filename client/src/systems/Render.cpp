@@ -6,8 +6,7 @@
 #include "components/Sprite.hpp"
 
 void Render::RenderTile(EntityManager& entityManager) {
-    for (auto& entity : entityManager.GetEntities<Position, Sprite>()) {
-        if (!entityManager.TryGetComponent<TileTag>(entity.id)) continue;
+    for (auto& entity : entityManager.GetEntities<TileTag, Position, Sprite>()) {
         auto& position = entityManager.GetComponent<Position>(entity.id);
         auto& sprite = entityManager.GetComponent<Sprite>(entity.id);
 
@@ -15,10 +14,26 @@ void Render::RenderTile(EntityManager& entityManager) {
     }
 }
 
-void Render::RenderActor(EntityManager& entityManager) {
-    for (auto& entity : entityManager.GetEntities<Position, Sprite>()) {
+void Render::RenderActor(EntityManager& entityManager, uint32_t localID) {
+    for (auto& entity : entityManager.GetEntities<Position, Sprite, Type>()) {
+        if (entityManager.TryGetComponent<TileTag>(entity.id)) continue;
+
         auto& position = entityManager.GetComponent<Position>(entity.id);
         auto& sprite = entityManager.GetComponent<Sprite>(entity.id);
+        auto& type = entityManager.GetComponent<Type>(entity.id);
+
+        if (type.type == EntityType::Projectile || type.type == EntityType::Tower) {
+            auto* localTeam = entityManager.TryGetComponent<Team>(localID);
+            auto* entityTeam = entityManager.TryGetComponent<Team>(entity.id);
+            if (!localTeam || !entityTeam) continue;
+
+            Color entityColor = WHITE;
+            if (entityTeam->color != TeamColor::None) entityColor = (localTeam->color == entityTeam->color)? BLUE : RED;
+            DrawTexture(AssetManager::Get().GetTexture(sprite.id), position.x-8, position.y-8, entityColor);
+            continue;
+        }
+
+        if (auto* hp = entityManager.TryGetComponent<Health>(entity.id)) if (hp->IsDead()) continue;
 
         DrawTexture(AssetManager::Get().GetTexture(sprite.id), position.x-8, position.y-8, WHITE);
     }
@@ -29,6 +44,8 @@ void Render::RenderLifebar(EntityManager& entityManager, uint32_t localID) {
         auto& position = entityManager.GetComponent<Position>(entity.id);
         auto& health = entityManager.GetComponent<Health>(entity.id);
 
+        if (health.current <= 0.0f) continue;
+
         Color lifeBarColor = RED;
         if (auto* localTeam = entityManager.TryGetComponent<Team>(localID)) {
             if (auto* team = entityManager.TryGetComponent<Team>(entity.id)) {
@@ -37,5 +54,7 @@ void Render::RenderLifebar(EntityManager& entityManager, uint32_t localID) {
         }
         if (localID == entity.id) lifeBarColor = GREEN;
         DrawRectangle(position.x - 10, position.y - 14, 20 * (health.current / health.max), 2, lifeBarColor);
+
+        if (auto* player = entityManager.TryGetComponent<Player>(entity.id)) DrawText(player->nickname, position.x - MeasureText(player->nickname, 6)/2, position.y - 26, 6, lifeBarColor);
     }
 }

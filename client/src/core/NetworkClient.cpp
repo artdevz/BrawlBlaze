@@ -1,4 +1,4 @@
-#include "network/Client.hpp"
+#include "core/NetworkClient.hpp"
 
 #include <iostream>
 

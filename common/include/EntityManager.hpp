@@ -8,13 +8,17 @@
 #include <vector>
 
 #include "components/Collider.hpp"
+#include "components/Dead.hpp"
 #include "components/Health.hpp"
+#include "components/KDA.hpp"
+#include "components/Player.hpp"
 #include "components/Position.hpp"
 #include "components/Projectile.hpp"
 #include "components/Tag.hpp"
 #include "components/Team.hpp"
 #include "components/Type.hpp"
 #include "components/Velocity.hpp"
+#include "components/Wallet.hpp"
 #include "components/RemoveTag.hpp"
 
 struct Entity {
@@ -37,6 +41,14 @@ public:
     void AddComponent(uint32_t id, T component) {
         auto& componentsMap = entityComponents[id];
         componentsMap[typeid(T)] = std::make_unique<T>(component);
+    }
+
+    template<typename T>
+    void RemoveComponent(uint32_t id) {
+        auto& componentsMap = entityComponents[id];
+        auto it = componentsMap.find(typeid(T));
+        
+        if (it != componentsMap.end()) componentsMap.erase(it);
     }
 
     template<typename T>

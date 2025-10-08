@@ -9,6 +9,7 @@ int main() {
 
     InitWindow(1280, 720, "BrawlBlaze");
     SetTargetFPS(60);
+    SetExitKey(KEY_Q);
 
     ScreenManager screenManager;
     screenManager.Push(ScreenType::Menu);

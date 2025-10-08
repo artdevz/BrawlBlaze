@@ -2,9 +2,6 @@
 
 #include "EntityManager.hpp"
 
-#include "components/Position.hpp"
-#include "components/Velocity.hpp"
-
 class Movement {
 
 public:

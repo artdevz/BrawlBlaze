@@ -5,7 +5,7 @@
 #include <queue>
 #include <thread>
 
-#include "network/Client.hpp"
+#include "core/NetworkClient.hpp"
 
 class NetworkManager {
 
@@ -21,6 +21,12 @@ public:
 
     std::queue<RemoveEntityPayload> removeQueue;
     std::mutex removeMutex;
+
+    std::queue<CombatStatsPaylod> combatStatsQueue;
+    std::mutex combatStatsMutex;
+
+    std::queue<MatchStatsPayload> matchStatsQueue;
+    std::mutex matchStatsMutex;
 
     void Start(Client* client);
     void Stop();

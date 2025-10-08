@@ -12,7 +12,9 @@ enum class ServerPacketType : uint8_t {
     Init = 1,
     EntityState = 2,
     Add = 3,
-    Remove = 4
+    Remove = 4,
+    CombatStats = 5,
+    MatchStats = 6
 };
 
 #pragma pack(push, 1)
@@ -55,6 +57,7 @@ struct InitPayload {
     char nickname[32];
     float x, y;
     float hp, maxHP;
+    uint8_t team;
 };
 
 struct EntityStatePayload {
@@ -69,11 +72,23 @@ struct AddEntityPayload {
     uint16_t type;
     float x, y;
     float hp, maxHP;
+    char nickname[32];
     uint8_t team;
 };
 
 struct RemoveEntityPayload {
     uint32_t entityID;
+};
+
+struct CombatStatsPaylod {
+    uint32_t entityID;
+    uint16_t kills;
+    uint16_t deaths;
+    uint16_t assists;
+};
+
+struct MatchStatsPayload {
+    uint64_t time;
 };
 
 #pragma pack(pop)

@@ -27,7 +27,7 @@ void Game::Init() {
     networkManager.Start(client.get());
 
     ConnectPayload payload{};
-    const char* nickname = "Artdz";
+    const char* nickname = "Artdz2";
     std::strncpy(payload.nickname, nickname, sizeof(payload.nickname) - 1);
     payload.nickname[sizeof(payload.nickname) - 1] = '\0';
     client->Send(ClientPacketType::Connect, payload);
@@ -42,9 +42,13 @@ void Game::Init() {
             entityManager.AddComponent(entity.id, Type(EntityType::Player));
             entityManager.AddComponent(entity.id, Position(initPayload.x, initPayload.y));
             entityManager.AddComponent(entity.id, Velocity(100.0f));
-            entityManager.AddComponent(entity.id, Health(100.0f, 100.0f));
+            entityManager.AddComponent(entity.id, Health(initPayload.hp, initPayload.maxHP));
             entityManager.AddComponent(entity.id, Collider(16.0f, 16.0f));
-            entityManager.AddComponent(entity.id, Team(TeamColor::Blue));
+            entityManager.AddComponent(entity.id, Player());
+            entityManager.AddComponent(entity.id, KDA());
+            std::strncpy(entityManager.GetComponent<Player>(entity.id).nickname, initPayload.nickname, sizeof(initPayload.nickname) - 1);
+            entityManager.GetComponent<Player>(entity.id).nickname[sizeof(initPayload.nickname) - 1] = '\0';
+            entityManager.AddComponent(entity.id, Team(initPayload.team > 0 ? (TeamColor)initPayload.team : TeamColor::None));
             entityManager.AddComponent(entity.id, Sprite("human"));
             localPlayerID = initPayload.entityID;
             break;
@@ -95,22 +99,46 @@ void Game::Update() {
         if (addPayload.entityID == localPlayerID) continue;
         if (spawnedEntities.count(addPayload.entityID)) continue;
         spawnedEntities.insert(addPayload.entityID);
+
         Entity entity = entityManager.CreateEntity();
         entity.id = addPayload.entityID;
         entityManager.AddComponent(entity.id, Type((EntityType)addPayload.type));
         std::cout << "Spawning Entity ID: " << entity.id << " Type: " << (int)addPayload.type << "\n";
         entityManager.AddComponent(entity.id, Position(addPayload.x, addPayload.y));
+
         if (addPayload.type == (uint16_t)EntityType::Player) {
             entityManager.AddComponent(entity.id, Collider(16.0f, 16.0f));
+            entityManager.AddComponent(entity.id, Player());
+            entityManager.AddComponent(entity.id, KDA());
+            if (addPayload.nickname[0] != '\0') {
+                std::strncpy(entityManager.GetComponent<Player>(entity.id).nickname, addPayload.nickname, sizeof(addPayload.nickname) - 1);
+                entityManager.GetComponent<Player>(entity.id).nickname[sizeof(addPayload.nickname) - 1] = '\0';
+            }
             entityManager.AddComponent(entity.id, Sprite("human"));
         }
-        if (addPayload.type == (uint16_t)EntityType::Projectile) {
-            // entityManager.AddComponent(entity.id, Velocity());
-            entityManager.AddComponent(entity.id, Collider(4.0f, 4.0f));
-            entityManager.AddComponent(entity.id, Sprite("bullet"));
+
+        if (addPayload.type == (uint16_t)EntityType::FloorTile) {
+            entityManager.AddComponent(entity.id, Type(EntityType::FloorTile));
+            entityManager.AddComponent(entity.id, TileTag());
+            entityManager.AddComponent(entity.id, Position(addPayload.x, addPayload.y));
+            entityManager.AddComponent(entity.id, Sprite("floor"));
         }
+
+        if (addPayload.type == (uint16_t)EntityType::Projectile) {
+            entityManager.AddComponent(entity.id, Type(EntityType::Projectile));
+            entityManager.AddComponent(entity.id, Sprite("bullet"));
+            entityManager.AddComponent(entity.id, Projectile(localPlayerID));
+        }
+
+        if (addPayload.type == (uint16_t)EntityType::Tower) {
+            entityManager.AddComponent(entity.id, Type(EntityType::Tower));
+            entityManager.AddComponent(entity.id, Collider(16.0f, 16.0f));
+            entityManager.AddComponent(entity.id, Sprite("tower"));
+        }
+
         entityManager.AddComponent(entity.id, Health(addPayload.hp, addPayload.maxHP));
         if (addPayload.team > 0) {
+            std::cout << "Entity ID: " << entity.id << " Team: " << (int)addPayload.team << "\n";
             entityManager.AddComponent(entity.id, Team((TeamColor)addPayload.team));
         }
     }
@@ -131,11 +159,27 @@ void Game::Update() {
 
     RemoveEntityPayload removePayload{};
     while (networkManager.PoolPacket(networkManager.removeQueue, networkManager.removeMutex, removePayload)) {
-        if (auto* position = entityManager.TryGetComponent<Position>(removePayload.entityID)) {
+        if (removePayload.entityID) {
             std::cout << "Removing Entity ID: " << removePayload.entityID << "\n";
             entityManager.DeleteEntity(removePayload.entityID);
             spawnedEntities.erase(removePayload.entityID);
         }
+    }
+
+    // ===== Combat Stats ===== //
+
+    CombatStatsPaylod combatStatsPayload{};
+    while (networkManager.PoolPacket(networkManager.combatStatsQueue, networkManager.combatStatsMutex, combatStatsPayload)) {
+        if (auto* kda = entityManager.TryGetComponent<KDA>(combatStatsPayload.entityID)) {
+            kda->kills = combatStatsPayload.kills;
+            kda->deaths = combatStatsPayload.deaths;
+            kda->assists = combatStatsPayload.assists;
+        }
+    }
+
+    MatchStatsPayload matchStatsPayload{};
+    while (networkManager.PoolPacket(networkManager.matchStatsQueue, networkManager.matchStatsMutex, matchStatsPayload)) {
+        matchTime = matchStatsPayload.time;
     }
 
     // ===== Camera ===== //
@@ -147,18 +191,25 @@ void Game::Draw() {
     BeginMode2D(CameraManager::Get().GetCamera2D());
     ClearBackground(BLACK);
     render.RenderTile(entityManager);
-    render.RenderActor(entityManager);
+    render.RenderActor(entityManager, localPlayerID);
     render.RenderLifebar(entityManager, localPlayerID);
-    DrawRectangle(160-8, 160-8, 16, 16, GRAY);
     EndMode2D();
-
-    DrawLine(1280/2, 0, 1280/2, 720, RED);
-    DrawLine(0, 720/2, 1280, 720/2, RED);
+    if (auto* hp = entityManager.TryGetComponent<Health>(localPlayerID)) {
+        if (hp->IsDead()) {
+            DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), Fade(GRAY, 0.5f));
+            DrawText("You are dead!", GetScreenWidth()/2 - MeasureText("You are dead!", 40)/2, GetScreenHeight()/2 - 20, 40, RED);
+        }
+    }
 
     std::string entitiesCount = "E: " + std::to_string((int)entityManager.GetEntities().size());
     std::string position = "X: " + std::to_string((float)CameraManager::Get().GetCamera2D().target.x) + " Y: " + std::to_string((float)CameraManager::Get().GetCamera2D().target.y) + " Zoom: " + std::to_string((float)CameraManager::Get().GetCamera2D().zoom);
     DrawText(entitiesCount.c_str(), 10, 30, 20, WHITE);
     DrawText(position.c_str(), 10, 50, 20, WHITE);
+    if (auto* kda = entityManager.TryGetComponent<KDA>(localPlayerID)) {
+        std::string kdaText = "KDA: " + std::to_string(kda->kills) + " / " + std::to_string(kda->deaths) + " / " + std::to_string(kda->assists);
+        DrawText(kdaText.c_str(), 10, 70, 20, WHITE);
+    }
+    DrawText(std::to_string(matchTime).c_str(), 10, 90, 20, WHITE);
 
     DrawFPS(10, 10);
 }
