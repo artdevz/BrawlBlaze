@@ -281,6 +281,8 @@ int main(int argc, char** argv) {
             std::vector<RemoveEntityPayload> removeSnapshot;
             std::vector<CombatStatsPaylod> combatStatsSnapshot;
             std::vector<MatchStatsPayload> matchStatsSnapshot;
+            std::vector<EntityTeamChangePayload> teamChangeSnapshot;
+            std::vector<ChatMessagePayload> chatMessageSnapshot;
 
             // ===== Generate ===== //
 
@@ -354,6 +356,17 @@ int main(int argc, char** argv) {
                 //     payload.time = timer.time;
                 //     matchStatsSnapshot.push_back(payload);
                 // }
+
+                // ===== Entity Team Change ===== //
+                for (auto& entity : entityManager.GetEntities<Team>()) {
+                    EntityTeamChangePayload payload{};
+                    payload.entityID = entity.id;
+                    payload.newTeam = (uint8_t)entityManager.GetComponent<Team>(entity.id).color;
+                    if (entityManager.GetComponent<Team>(entity.id).changed) {
+                        entityManager.GetComponent<Team>(entity.id).changed = false;
+                        teamChangeSnapshot.push_back(payload);
+                    }
+                }
             }
 
             // ===== Send ===== //
@@ -381,6 +394,12 @@ int main(int argc, char** argv) {
             if (!matchStatsSnapshot.empty()) {
                 std::lock_guard<std::mutex> lock(serverMutex);
                 server.Broadcast<MatchStatsPayload>(ServerPacketType::MatchStats, matchStatsSnapshot);
+            }
+
+            if (!teamChangeSnapshot.empty()) {
+                std::lock_guard<std::mutex> lock(serverMutex);
+                cout << "[Server] Broadcasting team changes...\n";
+                server.Broadcast<EntityTeamChangePayload>(ServerPacketType::EntityTeamChange, teamChangeSnapshot);
             }
 
             std::this_thread::sleep_for(std::chrono::milliseconds(50));

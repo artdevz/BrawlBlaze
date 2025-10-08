@@ -51,6 +51,12 @@ void NetworkManager::NetworkThread(Client* client) {
                 std::lock_guard<std::mutex> lock(matchStatsMutex);
                 matchStatsQueue.push(payload);
                 break;
+            }
+            case ServerPacketType::EntityTeamChange: {
+                auto payload = client->ParsePayload<EntityTeamChangePayload>(result);
+                std::lock_guard<std::mutex> lock(teamChangeMutex);
+                teamChangeQueue.push(payload);
+                break;
             }  
             default:
                 break;

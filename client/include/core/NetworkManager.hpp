@@ -28,6 +28,9 @@ public:
     std::queue<MatchStatsPayload> matchStatsQueue;
     std::mutex matchStatsMutex;
 
+    std::queue<EntityTeamChangePayload> teamChangeQueue;
+    std::mutex teamChangeMutex;
+
     void Start(Client* client);
     void Stop();
 

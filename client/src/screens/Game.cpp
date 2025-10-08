@@ -177,9 +177,20 @@ void Game::Update() {
         }
     }
 
+    // ===== Match Stats ===== //
+
     MatchStatsPayload matchStatsPayload{};
     while (networkManager.PoolPacket(networkManager.matchStatsQueue, networkManager.matchStatsMutex, matchStatsPayload)) {
         matchTime = matchStatsPayload.time;
+    }
+
+    // ===== Team Change ===== //
+
+    EntityTeamChangePayload teamChangePayload{};
+    while (networkManager.PoolPacket(networkManager.teamChangeQueue, networkManager.teamChangeMutex, teamChangePayload)) {
+        if (auto* team = entityManager.TryGetComponent<Team>(teamChangePayload.entityID)) {
+            team->color = (TeamColor)teamChangePayload.newTeam;
+        }
     }
 
     // ===== Camera ===== //

@@ -10,6 +10,7 @@ enum class TeamColor : uint8_t {
 
 struct Team {
     TeamColor color;
+    bool changed = false;
 
     Team(TeamColor color = TeamColor::None) : color(color) {}
 };
