@@ -29,7 +29,8 @@ void Combat::HandleProjectiles(EntityManager& entityManager) {
             entityManager.AddComponent(entity.id, RemoveTag());
             auto* health = entityManager.TryGetComponent<Health>(other.id);
             if (!health) continue;
-
+            std::cout << "[Server] Entity ID: " << other.id << " hit by Projectile ID: " << entity.id << "\n";
+            std::cout << health->current << " - 10 = ";
             if (health->TakeDamage(10.0f)) {
                 std::cout << "[Server] Entity ID: " << other.id << " died.\n";
                 if (auto* player = entityManager.TryGetComponent<Player>(other.id)) {
@@ -41,6 +42,15 @@ void Combat::HandleProjectiles(EntityManager& entityManager) {
                     }
                     entityManager.AddComponent(other.id, Dead());
                     continue;
+                }
+                if (auto* type = entityManager.TryGetComponent<Type>(other.id)) {
+                    if (type->type == EntityType::Tower) {
+                        std::cout << "[Server] Tower ID: " << other.id << " has been taken!\n";
+                        otherTeam->color = originTeam->color; // To-Do: S2C Packet que atualize o time da torre para todos os clientes
+                        health->MaxHeal();
+                        if (auto* originWallet = entityManager.TryGetComponent<Wallet>(entity.id)) originWallet->AddGold(50);
+                        continue;
+                    }
                 }
                 entityManager.AddComponent(other.id, RemoveTag()); 
             }

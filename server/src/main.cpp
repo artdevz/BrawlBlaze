@@ -85,6 +85,8 @@ int main(int argc, char** argv) {
                 entityManager.AddComponent(tower.id, Health(500.0f, 500.0f));
                 entityManager.AddComponent(tower.id, Team(TeamColor::None));
 
+                entityManager.AddComponent(tower.id, Velocity(0.0f)); // Gambiarra :P
+
                 for (float i = 0.0f; i < 64.0f; i += 16.0f) for (float j = 0.0f; j < 64.0f; j += 16.0f) {
                     Entity floor = entityManager.CreateEntity();
                     entityManager.AddComponent(floor.id, Type(EntityType::FloorTile));
@@ -144,7 +146,7 @@ int main(int argc, char** argv) {
                 std::lock_guard<std::mutex> lock(entityMutex);
                 for (auto entity : entityManager.GetEntities<Cooldown>()) {
                     auto& cooldown = entityManager.GetComponent<Cooldown>(entity.id);
-                    cout << "[Server] Entity ID: " << entity.id << " Cooldown: " << cooldown.remain << "ms\n";
+                    // cout << "[Server] Entity ID: " << entity.id << " Cooldown: " << cooldown.remain << "ms\n";
                     cooldown.ReduceCooldown(deltaTime * 1000);
                 }
             }
@@ -186,10 +188,11 @@ int main(int argc, char** argv) {
                 cout << "Entity[" << entity.id << "] K: " << kda.kills << " D: " << kda.deaths << " A: " << kda.assists << "\n";
             }*/
 
+            /*
             for (auto entity : entityManager.GetEntities<Wallet>()) {
                 auto& wallet = entityManager.GetComponent<Wallet>(entity.id);
                 cout << "[DEBUG] Entity[" << entity.id << "] Silver: " << wallet.silver << " Gold: " << wallet.gold << "\n";
-            }
+            }*/
 
             std::this_thread::sleep_for(std::chrono::milliseconds(5));
         }
