@@ -4,6 +4,7 @@
 
 struct Timer {
     uint64_t time;
+    bool changed = false;
 
     Timer() : time(0) {}
 

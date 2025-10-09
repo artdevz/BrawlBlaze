@@ -27,7 +27,7 @@ void Game::Init() {
     networkManager.Start(client.get());
 
     ConnectPayload payload{};
-    const char* nickname = "Artdz2";
+    const char* nickname = "Artdz";
     std::strncpy(payload.nickname, nickname, sizeof(payload.nickname) - 1);
     payload.nickname[sizeof(payload.nickname) - 1] = '\0';
     client->Send(ClientPacketType::Connect, payload);
@@ -177,9 +177,20 @@ void Game::Update() {
         }
     }
 
+    // ===== Match Stats ===== //
+
     MatchStatsPayload matchStatsPayload{};
     while (networkManager.PoolPacket(networkManager.matchStatsQueue, networkManager.matchStatsMutex, matchStatsPayload)) {
-        matchTime = matchStatsPayload.time;
+        matchTime.time = matchStatsPayload.time;
+    }
+
+    // ===== Team Change ===== //
+
+    EntityTeamChangePayload teamChangePayload{};
+    while (networkManager.PoolPacket(networkManager.teamChangeQueue, networkManager.teamChangeMutex, teamChangePayload)) {
+        if (auto* team = entityManager.TryGetComponent<Team>(teamChangePayload.entityID)) {
+            team->color = (TeamColor)teamChangePayload.newTeam;
+        }
     }
 
     // ===== Camera ===== //
@@ -209,7 +220,8 @@ void Game::Draw() {
         std::string kdaText = "KDA: " + std::to_string(kda->kills) + " / " + std::to_string(kda->deaths) + " / " + std::to_string(kda->assists);
         DrawText(kdaText.c_str(), 10, 70, 20, WHITE);
     }
-    DrawText(std::to_string(matchTime).c_str(), 10, 90, 20, WHITE);
+    std::string timeText = ((matchTime.GetMinutes() < 10)? "0" + std::to_string(matchTime.GetMinutes()) : std::to_string(matchTime.GetMinutes())) + ":" + ((matchTime.GetSeconds() < 10)? "0" + std::to_string(matchTime.GetSeconds()) : std::to_string(matchTime.GetSeconds()));
+    DrawText(timeText.c_str(), 10, 90, 20, WHITE);
 
     DrawFPS(10, 10);
 }

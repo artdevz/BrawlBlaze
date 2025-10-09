@@ -27,34 +27,50 @@ void Combat::HandleProjectiles(EntityManager& entityManager) {
             if (originTeam->color == otherTeam->color) continue;
 
             entityManager.AddComponent(entity.id, RemoveTag());
-            auto* health = entityManager.TryGetComponent<Health>(other.id);
-            if (!health) continue;
-            std::cout << "[Server] Entity ID: " << other.id << " hit by Projectile ID: " << entity.id << "\n";
-            std::cout << health->current << " - 10 = ";
-            if (health->TakeDamage(10.0f)) {
-                std::cout << "[Server] Entity ID: " << other.id << " died.\n";
-                if (auto* player = entityManager.TryGetComponent<Player>(other.id)) {
-                    std::cout << "[Server] Player " << player->nickname << " has been killed!\n";
-                    if (auto* kda = entityManager.TryGetComponent<KDA>(other.id)) kda->AddDeath();
-                    if (auto* projectile = entityManager.TryGetComponent<Projectile>(entity.id)) { 
-                        if (auto* originKDA = entityManager.TryGetComponent<KDA>(projectile->originID)) originKDA->AddKill(); 
-                        if (auto* originWallet = entityManager.TryGetComponent<Wallet>(projectile->originID)) originWallet->AddSilver(100);
-                    }
-                    entityManager.AddComponent(other.id, Dead());
-                    continue;
-                }
-                if (auto* type = entityManager.TryGetComponent<Type>(other.id)) {
-                    if (type->type == EntityType::Tower) {
-                        std::cout << "[Server] Tower ID: " << other.id << " has been taken!\n";
-                        otherTeam->color = originTeam->color; // To-Do: S2C Packet que atualize o time da torre para todos os clientes
-                        health->MaxHeal();
-                        if (auto* originWallet = entityManager.TryGetComponent<Wallet>(entity.id)) originWallet->AddGold(50);
-                        continue;
-                    }
-                }
-                entityManager.AddComponent(other.id, RemoveTag()); 
-            }
-            
+            auto& projectile = entityManager.GetComponent<Projectile>(entity.id);
+            DamageEntity(entityManager, projectile.originID, other.id);          
         }
     }
 };
+
+void Combat::DamageEntity(EntityManager& entityManager, uint32_t originID, uint32_t targetID) {
+    auto* health = entityManager.TryGetComponent<Health>(targetID);
+    if (!health) return;
+
+    if (health->TakeDamage(25.0f)) {
+        std::cout << "[Server] Entity ID: " << targetID << " died.\n";
+        if (auto* player = entityManager.TryGetComponent<Player>(targetID)) {
+            std::cout << "[Server] Player " << player->nickname << " has been killed!\n";
+            UpdateKDA(entityManager, originID, targetID);
+            UpdateWallet(entityManager, originID, targetID, 100, 0);
+            entityManager.AddComponent(targetID, Dead());
+            return;
+        }
+
+        if (auto* type = entityManager.TryGetComponent<Type>(targetID)) {
+            if (type->type == EntityType::Tower) {
+                std::cout << "[Server] Tower ID: " << targetID << " has been taken!\n";
+                auto* targetTeam = entityManager.TryGetComponent<Team>(targetID);
+                auto* originTeam = entityManager.TryGetComponent<Team>(originID);
+                if (targetTeam && originTeam) {
+                    targetTeam->color = originTeam->color;
+                    targetTeam->changed = true;
+                    health->MaxHeal();
+                    UpdateWallet(entityManager, originID, targetID, 0, 50);
+                }
+                return;
+            }
+        }
+        entityManager.AddComponent(targetID, RemoveTag());
+    }
+}
+
+void Combat::UpdateKDA(EntityManager& entityManager, uint32_t originID, uint32_t targetID) {
+    if (auto* targetKDA = entityManager.TryGetComponent<KDA>(targetID)) targetKDA->AddDeath();
+    if (auto* originKDA = entityManager.TryGetComponent<KDA>(originID)) originKDA->AddKill();
+}
+
+void Combat::UpdateWallet(EntityManager& entityManager, uint32_t originID, uint32_t targetID, uint16_t silver, uint16_t gold) {
+    if (auto* originWallet = entityManager.TryGetComponent<Wallet>(originID)) originWallet->AddSilver(silver);
+    if (auto* originWallet = entityManager.TryGetComponent<Wallet>(originID)) originWallet->AddGold(gold);
+}
