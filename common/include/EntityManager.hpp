@@ -7,6 +7,7 @@
 #include <unordered_map>
 #include <vector>
 
+#include "components/Armour.hpp"
 #include "components/Collider.hpp"
 #include "components/Critical.hpp"
 #include "components/Damage.hpp"

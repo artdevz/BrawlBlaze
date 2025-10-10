@@ -57,6 +57,7 @@ int main(int argc, char** argv) {
                 entityManager.AddComponent(ally.id, Velocity(100.0f));
                 entityManager.AddComponent(ally.id, Collider(16.0f, 16.0f));
                 entityManager.AddComponent(ally.id, Health(100.0f, 100.0f));
+                entityManager.AddComponent(ally.id, Armour(10));
                 entityManager.AddComponent(ally.id, Player());
                 entityManager.AddComponent(ally.id, KDA());
                 entityManager.AddComponent(ally.id, Wallet());
@@ -70,6 +71,7 @@ int main(int argc, char** argv) {
                 entityManager.AddComponent(dummy.id, Velocity(100.0f));
                 entityManager.AddComponent(dummy.id, Collider(16.0f, 16.0f));
                 entityManager.AddComponent(dummy.id, Health(100.0f, 100.0f));
+                entityManager.AddComponent(dummy.id, Armour(10));
                 entityManager.AddComponent(dummy.id, Player());
                 entityManager.AddComponent(dummy.id, KDA());
                 entityManager.AddComponent(dummy.id, Wallet());
@@ -83,6 +85,7 @@ int main(int argc, char** argv) {
                 entityManager.AddComponent(tower.id, Collider(16.0f, 16.0f));
                 entityManager.AddComponent(tower.id, Health(500.0f, 500.0f));
                 entityManager.AddComponent(tower.id, Team(TeamColor::None));
+                entityManager.AddComponent(tower.id, Armour(100));
 
                 entityManager.AddComponent(tower.id, Velocity(0.0f)); // Gambiarra :P
 
@@ -221,6 +224,7 @@ int main(int argc, char** argv) {
                             entityManager.AddComponent(newPlayer.id, Health(100.0f, 100.0f));
                             entityManager.AddComponent(newPlayer.id, Damage(20.0f));
                             entityManager.AddComponent(newPlayer.id, Critical(50, 2.0f));
+                            entityManager.AddComponent(newPlayer.id, Armour(10));
                             entityManager.AddComponent(newPlayer.id, Player());
                             entityManager.AddComponent(newPlayer.id, KDA());
                             entityManager.AddComponent(newPlayer.id, Wallet());

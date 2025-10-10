@@ -16,8 +16,9 @@ struct Health {
     }
 
     bool TakeDamage(float amount) {
+        if (amount < 0) amount = 0;
         current -= amount;
-        if (current <= 0.0f) {
+        if (current <= 0.0f) { // Isso não é somente um Clamping, ele também serve para retornar True quando a Entity morre
             current = 0.0f;
             return true;
         }
