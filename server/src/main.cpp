@@ -221,12 +221,18 @@ int main(int argc, char** argv) {
                 cout << "[DEBUG] Entity[" << entity.id << "] Silver: " << wallet.silver << " Gold: " << wallet.gold << "\n";
             }*/
 
+            for (auto& match : entityManager.GetEntities<Scoreboard>()) {
+                if (auto* scoreboard = entityManager.TryGetComponent<Scoreboard>(match.id)) {
+                    cout << "[DEBUG] Scoreboard: Blue: " << (int)scoreboard->blueScore << " x " << (int)scoreboard->redScore << " :Red\n";
+                }
+            }
+
             std::this_thread::sleep_for(std::chrono::milliseconds(5));
         }
     });
 
+    bool matchInitialized = false;
     std::thread inputThread([&]() {
-        bool matchInitialized = false;
         while (running) {
             auto packet = server.Receive();
             if (packet.type == 0) {
@@ -282,9 +288,12 @@ int main(int argc, char** argv) {
 
                         /*
                         if (!matchInitialized) {
+                            cout << "Criando partida...\n";
                             Entity match = entityManager.CreateEntity();
                             entityManager.AddComponent(match.id, Timer());
-                        }*/
+                            entityManager.AddComponent(match.id, Scoreboard());
+                            matchInitialized = true;
+                        } */
                     }
 
                     case ClientPacketType::Input: {
@@ -424,11 +433,12 @@ int main(int argc, char** argv) {
                 server.Broadcast<CombatStatsPaylod>(ServerPacketType::CombatStats, combatStatsSnapshot);
             }
 
+            /*
             if (!matchStatsSnapshot.empty()) {
                 std::lock_guard<std::mutex> lock(serverMutex);
                 cout << "[Server] Broadcasting match stats...\n";
                 server.Broadcast<MatchStatsPayload>(ServerPacketType::MatchStats, matchStatsSnapshot);
-            }
+            } */
 
             if (!teamChangeSnapshot.empty()) {
                 std::lock_guard<std::mutex> lock(serverMutex);

@@ -19,6 +19,7 @@
 #include "components/Player.hpp"
 #include "components/Position.hpp"
 #include "components/Projectile.hpp"
+#include "components/Scoreboard.hpp"
 #include "components/Tag.hpp"
 #include "components/Team.hpp"
 #include "components/Timer.hpp"

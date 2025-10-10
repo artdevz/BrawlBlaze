@@ -54,9 +54,17 @@ void Capture::DeliverFlag(EntityManager& entityManager) {
         if (!position) continue;
 
         int8_t side = (team->color == TeamColor::Blue)? 1 : -1;
-        if (position->x >= ((side == 1)? -256.0f : 128.0f) && position->x <= (-256.0f * side) + 128.0f &&
-            position->y >= ((side == 1)? 128.0f : -256.0f) && position->y <= ((side == 1)? 128.0f : -256.0f) + 128.0f) {
+        if (position->x >= ((side == 1)? -256.0f : 128.0f) && position->x <= (-256.0f * side) + 128.0f && position->y >= ((side == 1)? 128.0f : -256.0f) && position->y <= ((side == 1)? 128.0f : -256.0f) + 128.0f) {
             inventory->flag = false;
+            for (auto& match : entityManager.GetEntities<Scoreboard>()) {
+                if (auto* scoreboard = entityManager.TryGetComponent<Scoreboard>(match.id)) {
+                    if (side == 1) {
+                        scoreboard->blueScore++;
+                        break;
+                    }
+                    scoreboard->redScore++;
+                }
+            }
             entityManager.AddComponent(inventory->flagID, RemoveTag());
             std::cout << "Entregou a Bandeira!\n";
         }
