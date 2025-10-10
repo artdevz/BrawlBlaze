@@ -8,11 +8,13 @@
 
 #include "../../common/include/EntityManager.hpp"
 
+#include "systems/Capture.hpp"
 #include "systems/Combat.hpp"
 #include "../../common/include/systems/Movement.hpp"
 
 #include "components/Cooldown.hpp"
 #include "components/Lifetime.hpp"
+#include "components/TryPick.hpp"
 
 using std::string, std::cout;
 
@@ -23,6 +25,8 @@ int main(int argc, char** argv) {
     if (!server.Start(8080)) return 1;
 
     EntityManager entityManager;
+    
+    Capture capture;
     Combat combat;
     Movement movement;
 
@@ -89,6 +93,12 @@ int main(int argc, char** argv) {
 
                 entityManager.AddComponent(tower.id, Velocity(0.0f)); // Gambiarra :P
 
+                Entity blueFlag = entityManager.CreateEntity();
+                entityManager.AddComponent(blueFlag.id, Type(EntityType::Flag));
+                entityManager.AddComponent(blueFlag.id, Position(-128.0f, -128.0f));
+                entityManager.AddComponent(blueFlag.id, FlagTag());
+                entityManager.AddComponent(blueFlag.id, Team(TeamColor::Blue));
+
                 for (float i = 0.0f; i < 64.0f; i += 16.0f) for (float j = 0.0f; j < 64.0f; j += 16.0f) {
                     Entity floor = entityManager.CreateEntity();
                     entityManager.AddComponent(floor.id, Type(EntityType::FloorTile));
@@ -118,6 +128,12 @@ int main(int argc, char** argv) {
                         velocity->dx = input.x * speed; velocity->dy = input.y * speed;
                     }
 
+                    if (auto* inventory = entityManager.TryGetComponent<Inventory>(input.playerID)) {
+                        if (inventory->flag) continue;
+                    }
+
+                    if (input.isPickUsed) entityManager.AddComponent(input.playerID, TryPick());
+
                     if (input.isMouseUsed) {
                         if (auto* cooldown = entityManager.TryGetComponent<Cooldown>(input.playerID)) {
                             if (!cooldown->IsReady()) continue;     
@@ -139,6 +155,8 @@ int main(int argc, char** argv) {
                 }
             }
 
+            capture.CaptureFlag(entityManager);
+            capture.DeliverFlag(entityManager);
             movement.Move(entityManager, deltaTime);
             combat.HandleProjectiles(entityManager);
 
@@ -226,6 +244,7 @@ int main(int argc, char** argv) {
                             entityManager.AddComponent(newPlayer.id, Critical(50, 2.0f));
                             entityManager.AddComponent(newPlayer.id, Armour(10));
                             entityManager.AddComponent(newPlayer.id, Player());
+                            entityManager.AddComponent(newPlayer.id, Inventory());
                             entityManager.AddComponent(newPlayer.id, KDA());
                             entityManager.AddComponent(newPlayer.id, Wallet());
                             entityManager.AddComponent(newPlayer.id, Cooldown(333.0f));

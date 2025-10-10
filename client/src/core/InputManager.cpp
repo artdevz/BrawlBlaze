@@ -13,6 +13,8 @@ namespace InputManager {
 
     // ===== Actions ===== //
 
+    bool IsPickUpFlagPressed() { return IsKeyDown(KEY_E); }
+
     bool IsBasicAttackPressed() { return IsMouseButtonDown(MOUSE_BUTTON_LEFT) || IsKeyDown(KEY_SPACE); }
 
 }

@@ -37,6 +37,7 @@ struct InputPayload {
     uint32_t playerID;
     uint32_t inputSequence;
     int8_t x, y;
+    bool isPickUsed = false;
     bool isMouseUsed = false;
     float targetX, targetY;
     float deltaTime;

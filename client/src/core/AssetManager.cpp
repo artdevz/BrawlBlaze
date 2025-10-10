@@ -30,6 +30,7 @@ void AssetManager::LoadTextures() {
     LoadTexture("bullet", "assets/sprites/Bullet.png");
     LoadTexture("floor", "assets/sprites/FloorTile.png");
     LoadTexture("tower", "assets/sprites/Tower.png");
+    LoadTexture("flag", "assets/sprites/Flag.png");
 }
 
 void AssetManager::UnloadTextures() {

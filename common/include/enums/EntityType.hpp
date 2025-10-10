@@ -7,5 +7,6 @@ enum class EntityType : uint16_t {
     Player,
     FloorTile,
     Projectile,
-    Tower
+    Tower,
+    Flag
 };

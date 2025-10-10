@@ -11,6 +11,7 @@ namespace InputManager {
 
     // ===== Actions ===== //
 
+    bool IsPickUpFlagPressed();
     bool IsBasicAttackPressed();
 
 }

@@ -33,6 +33,17 @@ void Render::RenderActor(EntityManager& entityManager, uint32_t localID) {
             continue;
         }
 
+        if (type.type == EntityType::Flag) {
+            auto* localTeam = entityManager.TryGetComponent<Team>(localID);
+            auto* entityTeam = entityManager.TryGetComponent<Team>(entity.id);
+            if (!localTeam || !entityTeam) continue;
+
+            Color flagColor = RED;
+            if (entityTeam->color == localTeam->color) flagColor = BLUE;
+            DrawTexture(AssetManager::Get().GetTexture(sprite.id), position.x-8, position.y-8, flagColor);
+            continue;
+        }
+
         if (auto* hp = entityManager.TryGetComponent<Health>(entity.id)) if (hp->IsDead()) continue;
 
         DrawTexture(AssetManager::Get().GetTexture(sprite.id), position.x-8, position.y-8, WHITE);

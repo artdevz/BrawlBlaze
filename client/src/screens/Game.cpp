@@ -82,6 +82,7 @@ void Game::Update() {
     // payload.inputSequence ++inputSequence;
     payload.x = direction.x;
     payload.y = direction.y;
+    if (InputManager::IsPickUpFlagPressed()) payload.isPickUsed = true;
     if (InputManager::IsBasicAttackPressed()) {
         Vector2 worldPosition = GetScreenToWorld2D(GetMousePosition(), CameraManager::Get().GetCamera2D());
         payload.targetX = worldPosition.x;
@@ -134,6 +135,10 @@ void Game::Update() {
             entityManager.AddComponent(entity.id, Type(EntityType::Tower));
             entityManager.AddComponent(entity.id, Collider(16.0f, 16.0f));
             entityManager.AddComponent(entity.id, Sprite("tower"));
+        }
+        if (addPayload.type == (uint16_t)EntityType::Flag) {
+            entityManager.AddComponent(entity.id, Type(EntityType::Flag));
+            entityManager.AddComponent(entity.id, Sprite("flag"));
         }
 
         entityManager.AddComponent(entity.id, Health(addPayload.hp, addPayload.maxHP));
@@ -201,6 +206,8 @@ void Game::Update() {
 void Game::Draw() {
     BeginMode2D(CameraManager::Get().GetCamera2D());
     ClearBackground(BLACK);
+    DrawRectangle(-256, 256, 128, 128, BLUE);
+    DrawRectangle(256, -256, 128, 128, RED);
     render.RenderTile(entityManager);
     render.RenderActor(entityManager, localPlayerID);
     render.RenderLifebar(entityManager, localPlayerID);
