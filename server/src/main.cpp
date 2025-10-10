@@ -219,6 +219,8 @@ int main(int argc, char** argv) {
                             entityManager.AddComponent(newPlayer.id, Velocity(100.0f, 100.0f));
                             entityManager.AddComponent(newPlayer.id, Collider(16.0f, 16.0f));
                             entityManager.AddComponent(newPlayer.id, Health(100.0f, 100.0f));
+                            entityManager.AddComponent(newPlayer.id, Damage(20.0f));
+                            entityManager.AddComponent(newPlayer.id, Critical(50, 2.0f));
                             entityManager.AddComponent(newPlayer.id, Player());
                             entityManager.AddComponent(newPlayer.id, KDA());
                             entityManager.AddComponent(newPlayer.id, Wallet());

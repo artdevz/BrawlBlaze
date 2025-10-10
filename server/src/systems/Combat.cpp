@@ -37,7 +37,21 @@ void Combat::DamageEntity(EntityManager& entityManager, uint32_t originID, uint3
     auto* health = entityManager.TryGetComponent<Health>(targetID);
     if (!health) return;
 
-    if (health->TakeDamage(25.0f)) {
+    auto* damage = entityManager.TryGetComponent<Damage>(originID);
+    if (!damage) return;
+
+    float value = damage->value;
+
+    if (auto* critical = entityManager.TryGetComponent<Critical>(originID)) {
+        uint8_t roll = rand() % 100;
+        std::cout << "[Debug] Roll: " << (int)roll << "\n";
+        if (roll < critical->chance) {
+            value *= critical->multiplier;
+            std::cout << "[Server] Critical hit! Multiplier: " << critical->multiplier << "x\n";
+        }
+    }
+
+    if (health->TakeDamage(value)) {
         std::cout << "[Server] Entity ID: " << targetID << " died.\n";
         if (auto* player = entityManager.TryGetComponent<Player>(targetID)) {
             std::cout << "[Server] Player " << player->nickname << " has been killed!\n";

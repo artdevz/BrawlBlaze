@@ -8,6 +8,8 @@
 #include <vector>
 
 #include "components/Collider.hpp"
+#include "components/Critical.hpp"
+#include "components/Damage.hpp"
 #include "components/Dead.hpp"
 #include "components/Health.hpp"
 #include "components/KDA.hpp"
