@@ -206,8 +206,8 @@ void Game::Update() {
 void Game::Draw() {
     BeginMode2D(CameraManager::Get().GetCamera2D());
     ClearBackground(BLACK);
-    DrawRectangle(-256, 256, 128, 128, BLUE);
-    DrawRectangle(256, -256, 128, 128, RED);
+    DrawRectangle(-256, 128, 128, 128, BLUE);
+    DrawRectangle(128, -256, 128, 128, RED);
     render.RenderTile(entityManager);
     render.RenderActor(entityManager, localPlayerID);
     render.RenderLifebar(entityManager, localPlayerID);

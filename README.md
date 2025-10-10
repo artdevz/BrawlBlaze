@@ -23,7 +23,7 @@
 
 Compilação Client: ```make client```
 Compilação Server: ```make server```
-Compilação Client & Server (Geral): ```make all```
+Compilação Client & Server (Geral): ```make```
 
 ---
 

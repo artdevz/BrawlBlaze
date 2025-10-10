@@ -69,6 +69,13 @@ void Combat::DamageEntity(EntityManager& entityManager, uint32_t originID, uint3
             UpdateKDA(entityManager, originID, targetID);
             UpdateWallet(entityManager, originID, targetID, 100, 0);
             entityManager.AddComponent(targetID, Dead());
+            auto* inventory = entityManager.TryGetComponent<Inventory>(targetID);
+            if (inventory) {
+                inventory->flag = false;
+                if (auto* flag = entityManager.TryGetComponent<FlagTag>(inventory->flagID)) {
+                    flag->captured = false;
+                }
+            }
             return;
         }
 

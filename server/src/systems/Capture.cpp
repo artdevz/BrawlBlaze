@@ -14,14 +14,24 @@ void Capture::CaptureFlag(EntityManager& entityManager) {
             auto* flagPosition = entityManager.TryGetComponent<Position>(flag.id);
             if (!flagPosition) continue;
 
+            auto* entityTeam = entityManager.TryGetComponent<Team>(entity.id);
+            auto* flagTeam = entityManager.TryGetComponent<Team>(flag.id);
+
+            if (!entityTeam || !flagTeam) continue;
+            if (entityTeam->color == flagTeam->color) continue;
+
             if (!InRange(*playerPosition, *flagPosition, 50.0f)) {
                 entityManager.RemoveComponent<TryPick>(entity.id);
                 continue;
             }
 
-            if (auto* inventory = entityManager.TryGetComponent<Inventory>(entity.id)) inventory->flag = true;
+            if (auto* inventory = entityManager.TryGetComponent<Inventory>(entity.id)) {
+                inventory->flag = true;
+                inventory->flagID = flag.id;
+            }
 
             if (auto* flagTag = entityManager.TryGetComponent<FlagTag>(flag.id)) {
+                if (flagTag->captured) continue;
                 flagTag->captured = true;
             }
             std::cout << "[Debug] Pegou uma bandeira!\n";
@@ -43,9 +53,11 @@ void Capture::DeliverFlag(EntityManager& entityManager) {
          auto* position = entityManager.TryGetComponent<Position>(entity.id);
         if (!position) continue;
 
-        uint8_t side = (team->color == TeamColor::Blue)? 1 : -1;
-        if (position->x >= (-256.0f * side) && position->x <= (-256.0f * side) + 128.0f && position->y >= (256.0f * side) && position->y <= (256.0f * side) + 128.0f) {
+        int8_t side = (team->color == TeamColor::Blue)? 1 : -1;
+        if (position->x >= ((side == 1)? -256.0f : 128.0f) && position->x <= (-256.0f * side) + 128.0f &&
+            position->y >= ((side == 1)? 128.0f : -256.0f) && position->y <= ((side == 1)? 128.0f : -256.0f) + 128.0f) {
             inventory->flag = false;
+            entityManager.AddComponent(inventory->flagID, RemoveTag());
             std::cout << "Entregou a Bandeira!\n";
         }
     }

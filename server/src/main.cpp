@@ -99,6 +99,12 @@ int main(int argc, char** argv) {
                 entityManager.AddComponent(blueFlag.id, FlagTag());
                 entityManager.AddComponent(blueFlag.id, Team(TeamColor::Blue));
 
+                Entity redFlag = entityManager.CreateEntity();
+                entityManager.AddComponent(redFlag.id, Type(EntityType::Flag));
+                entityManager.AddComponent(redFlag.id, Position(-156.0f, -156.0f));
+                entityManager.AddComponent(redFlag.id, FlagTag());
+                entityManager.AddComponent(redFlag.id, Team(TeamColor::Red));
+
                 for (float i = 0.0f; i < 64.0f; i += 16.0f) for (float j = 0.0f; j < 64.0f; j += 16.0f) {
                     Entity floor = entityManager.CreateEntity();
                     entityManager.AddComponent(floor.id, Type(EntityType::FloorTile));
